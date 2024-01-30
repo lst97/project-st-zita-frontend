@@ -63,22 +63,22 @@ const StaffScheduler = () => {
     };
 
     const handleCardDelete = (staff: StaffCardContent) => {
-        // Check if the staff member is in the assignedStaffList
-        if (assignedStaffList.some((item) => item.name === staff.name)) {
-            // Remove from assignedStaffList
-            setAssignedStaffList((prevAssignedStaffList) =>
-                prevAssignedStaffList.filter((item) => item.name !== staff.name)
-            );
-            removeSchedule(staff.name);
-            setSelectedStaff(null);
-        } else {
-            // Remove from notAssignedStaffList
-            setNotAssignedStaffList((prevNotAssignedStaffList) =>
-                prevNotAssignedStaffList.filter(
-                    (item) => item.name !== staff.name
-                )
-            );
-        }
+        removeFromAssignedStaff(staff);
+        removeFromNotAssignedStaff(staff);
+    };
+
+    const removeFromAssignedStaff = (staff: StaffCardContent) => {
+        setAssignedStaffList((prevAssignedStaffList) =>
+            prevAssignedStaffList.filter((item) => item.name !== staff.name)
+        );
+        removeSchedule(staff.name);
+        setSelectedStaff(null);
+    };
+
+    const removeFromNotAssignedStaff = (staff: StaffCardContent) => {
+        setNotAssignedStaffList((prevNotAssignedStaffList) =>
+            prevNotAssignedStaffList.filter((item) => item.name !== staff.name)
+        );
     };
 
     const handleSelectionFinish = (selectedSchedule: SelectedSchedule) => {
@@ -124,6 +124,7 @@ const StaffScheduler = () => {
                 <div>
                     <SchedulePlaner
                         isEnabled={selectedStaff != null}
+                        data={selectedScheduleMap[selectedStaff!]?.schedule}
                         onFinish={handleSelectionFinish}
                     />
                     <StaffAccordion title="Assigned">

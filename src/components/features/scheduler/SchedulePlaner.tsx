@@ -7,7 +7,7 @@ import {
     TodayButton,
     WeekView
 } from '@devexpress/dx-react-scheduler-material-ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CustomTimeTableCell from './TimeTableCells';
 import { getSelectedCells } from '../../../utils/ScheduleHelpers';
 import { Paper } from '@mui/material';
@@ -16,12 +16,19 @@ import { getISOWeekNumber } from '../../../utils/DateTimeUtils';
 
 const SchedulePlaner = ({
     isEnabled,
+    data,
     onFinish
 }: {
     isEnabled: boolean;
+    data?: string[];
     onFinish: (selectedCells: SelectedSchedule) => void;
 }) => {
     const [selectedCells, setSelectedCells] = useState<string[]>([]);
+
+    useEffect(() => {
+        setSelectedCells(data ?? []);
+    }, [data]); // Dependency array, useEffect runs when `data` changes
+
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState<Date | null>(null);
     const [initialAction, setInitialAction] = useState<'select' | 'unselect'>(
