@@ -3,11 +3,10 @@ import { WeekView } from '@devexpress/dx-react-scheduler-material-ui';
 
 const StyledTimeTableCell = styled(WeekView.TimeTableCell)(
   ({ theme, selected }) => ({
-    backgroundColor: selected ? 'lightgreen' : theme.palette.background.paper,
-    '&:hover': {
-      backgroundColor: 'lightblue'
-    },
-    cursor: 'pointer'
+    backgroundColor: selected
+      ? theme.palette.success.main
+      : theme.palette.background.paper,
+    cursor: 'hover'
   })
 );
 

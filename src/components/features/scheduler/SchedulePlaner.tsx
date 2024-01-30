@@ -1,46 +1,24 @@
 import { ViewState } from '@devexpress/dx-react-scheduler';
 import {
   Scheduler,
-  WeekView,
-  Appointments
+  MonthView,
+  Toolbar,
+  DateNavigator,
+  TodayButton,
+  WeekView
 } from '@devexpress/dx-react-scheduler-material-ui';
 import { useState } from 'react';
 import CustomTimeTableCell from './TimeTableCells';
 import { getSelectedCells } from '../../../utils/ScheduleHelpers';
+import { Paper } from '@mui/material';
 
-const MyScheduler = () => {
+const SchedulePlaner = () => {
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Date | null>(null);
   const [initialAction, setInitialAction] = useState<'select' | 'unselect'>(
     'select'
   );
-
-  // Example data
-  const appointments = [
-    {
-      startDate: '2024-01-28T09:45',
-      endDate: '2024-01-28T11:00',
-      title: 'Meeting'
-    },
-    {
-      startDate: '2024-01-28T09:45',
-      endDate: '2024-01-28T11:00',
-      title: 'Meeting'
-    },
-    {
-      startDate: '2024-01-28T09:45',
-      endDate: '2024-01-28T11:00',
-      title: 'Meeting'
-    },
-    {
-      startDate: '2024-01-28',
-      endDate: '2024-01-29',
-      title: 'All Day Conference',
-      allDay: true
-    }
-    // Add more appointments here
-  ];
 
   const handleMouseDown = (
     event: React.MouseEvent<HTMLDivElement>,
@@ -93,11 +71,14 @@ const MyScheduler = () => {
   };
 
   return (
-    <div
+    <Paper
       onMouseUp={handleMouseUp}
-      style={{ userSelect: 'none' }} // Prevent text selection during drag
+      style={{
+        userSelect: 'none', // Prevent text selection during drag
+        height: '500px' // Adjust height as needed
+      }}
     >
-      <Scheduler data={appointments}>
+      <Scheduler>
         <ViewState />
         <WeekView
           startDayHour={8}
@@ -112,10 +93,13 @@ const MyScheduler = () => {
             />
           )}
         />
-        <Appointments />
+        <MonthView />
+        <Toolbar />
+        <DateNavigator />
+        <TodayButton />
       </Scheduler>
-    </div>
+    </Paper>
   );
 };
 
-export default MyScheduler;
+export default SchedulePlaner;

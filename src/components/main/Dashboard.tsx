@@ -16,7 +16,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { mainListItems, secondaryListItems } from './DrawerItems';
-import StaffScheduler from '../features/scheduler/SchedulePlaner';
+import StaffScheduler from '../features/scheduler/StaffScheduler';
 
 function Copyright(props: any) {
   return (
