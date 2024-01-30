@@ -1,46 +1,52 @@
 import { DateDuration } from '../models/scheduler/ScheduleModel';
 
-// 'Jan 28 - Feb 3, 2024' or 'Feb 3, 2024'
-export function getISOWeekNumber(dateString: string) {
-    let date = null;
-    if (dateString.includes('-')) {
-        date = dateStringDurationToDateDuration(dateString).startDate;
-    } else {
-        const year = dateString.slice(-4);
-        date = new Date(`${dateString}, ${year}`);
-    }
-
+export function getISOWeekNumberFromDate(date: Date): number {
     // Create a new date object for the target date
     const target = new Date(date.valueOf());
 
-    // Set the target to the nearest Thursday (current date + 3 - current day number)
-    // This ensures we're always calculating from a week starting on a Monday
+    // Set the target to the nearest Thursday
     const dayNr = (date.getDay() + 6) % 7;
     target.setDate(target.getDate() - dayNr + 3);
 
     // Calculate the first Thursday of the year
-    const firstThursday = new Date(target.getFullYear(), 0, 1);
-    if (firstThursday.getDay() !== 4) {
-        firstThursday.setMonth(0, 1 + ((4 - firstThursday.getDay() + 7) % 7));
-    }
+    const firstDayOfYear = new Date(target.getFullYear(), 0, 1);
+    const firstThursday = new Date(firstDayOfYear);
+    firstThursday.setDate(
+        firstDayOfYear.getDate() + ((4 - firstDayOfYear.getDay() + 7) % 7)
+    );
 
-    // Calculate the number of weeks between the first Thursday and the target date
-    const weekNumber =
-        1 + Math.ceil((target.getTime() - firstThursday.getTime()) / 604800000); // 604800000 = number of milliseconds in a week
+    // Calculate the number of days between the first Thursday and the target date
+    const weekDiff =
+        (target.valueOf() - firstThursday.valueOf()) /
+        (1000 * 60 * 60 * 24 * 7);
 
-    return weekNumber;
+    // Return the week number
+    return 1 + Math.floor(weekDiff);
 }
 
-// 'Jan 28 - Feb 3, 2024';
-function dateStringDurationToDateDuration(dateString: string) {
-    // Step 1: Split the string into two parts
-    const [startStr, endStr] = dateString.split(' - ');
+export function getISOWeekNumberFromDateString(dateString: string): number {
+    let date;
 
-    // Step 2: Add the year to each part and parse them into Date objects
-    const year = dateString.slice(-4); // Extracting the year (last 4 characters)
-    const startDate = new Date(`${startStr}, ${year}`);
-    const endDate = new Date(`${endStr}, ${year}`);
-    return new DateDuration(startDate, endDate);
+    if (dateString.includes('-')) {
+        // Extract the start date from a range
+        const startDateString = dateString.split('-')[0].trim();
+        date = parseDate(startDateString);
+    } else {
+        // Handle a single date string
+        date = parseDate(dateString);
+    }
+
+    return getISOWeekNumberFromDate(date);
+}
+
+function parseDate(dateStr: string): Date {
+    // Assuming the format is 'dd/mm/yyyy'
+    const parts = dateStr.split('/');
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // months are 0-based in JavaScript
+    const year = parseInt(parts[2], 10);
+
+    return new Date(year, month, day);
 }
 
 // "Sun Jan 28 2024 12:00:00 GMT+1100 (Australian Eastern Daylight Time)" -> '2024-01-28T09:00'
@@ -52,4 +58,27 @@ export function convertScheduleStringToAppointmentDateString(
 
     // Format the Date
     return date.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+export function formatDateNavigatorText(date: Date, viewName: string) {
+    const formatDate = (date: Date) => date.toLocaleDateString(); // Customize this as needed
+
+    switch (viewName) {
+        case 'Day':
+            return formatDate(date);
+        case 'Week': {
+            let startOfWeek = new Date(date);
+            startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Adjust if your week starts on a different day
+            let endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+            return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+        }
+        case 'Month':
+            return date.toLocaleDateString(undefined, {
+                month: 'long',
+                year: 'numeric'
+            });
+        default:
+            return formatDate(date);
+    }
 }

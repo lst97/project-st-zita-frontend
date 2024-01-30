@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { SetStateAction, useEffect, useState } from 'react';
 import StaffCard from '../../common/cards/Cards';
 import SchedulePlaner from './SchedulePlaner';
 import ScheduleViewer from './ScheduleViewer';
@@ -9,8 +9,22 @@ import AddStaffDialog from './AddStaffDialog';
 import Button from '@mui/material/Button';
 import {
     SelectedSchedule,
+    StaffCardContentMap,
     StaffScheduleMap
 } from '../../../models/scheduler/ScheduleModel';
+import {
+    formatDateNavigatorText,
+    getISOWeekNumberFromDate,
+    getISOWeekNumberFromDateString
+} from '../../../utils/DateTimeUtils';
+
+const STAFF_MEMBERS = [
+    new StaffCardContent('Tofu', 'TOTAL_HOUR'),
+    new StaffCardContent('Kawaii', 'TOTAL_HOUR'),
+    new StaffCardContent('Taiwan', 'TOTAL_HOUR'),
+    new StaffCardContent('CL', 'TOTAL_HOUR'),
+    new StaffCardContent('Sharon', 'TOTAL_HOUR')
+];
 
 const StaffScheduler = () => {
     const [selectedStaff, setSelectedStaff] = useState<string | null>();
@@ -18,23 +32,114 @@ const StaffScheduler = () => {
     const [assignedStaffList, setAssignedStaffList] = useState<
         StaffCardContent[]
     >([]);
-    const [notAssignedStaffList, setNotAssignedStaffList] = useState<
-        StaffCardContent[]
-    >([
-        new StaffCardContent('Tofu', 'TOTAL_HOUR'),
-        new StaffCardContent('Kawaii', 'TOTAL_HOUR'),
-        new StaffCardContent('Taiwan', 'TOTAL_HOUR'),
-        new StaffCardContent('CL', 'TOTAL_HOUR'),
-        new StaffCardContent('Sharon', 'TOTAL_HOUR')
-    ]);
+    const [notAssignedStaffList, setNotAssignedStaffList] =
+        useState<StaffCardContent[]>(STAFF_MEMBERS);
+
     const [selectedScheduleMap, setSelectedScheduleMap] =
         useState<StaffScheduleMap>({});
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [currentViewName, setCurrentViewName] = useState('Week');
 
+    const initialKey =
+        getISOWeekNumberFromDate(currentDate).toString() +
+        currentDate.getFullYear().toString();
+    const [staffCardContentMap, setStaffCardContentMap] =
+        useState<StaffCardContentMap>({
+            [initialKey]: {
+                assigned: [],
+                notAssigned: [...STAFF_MEMBERS],
+                staffScheduleMap: {}
+            }
+        });
+
+    // useEffect(() => {
+    //     const weekNumber = getISOWeekNumberFromDate(currentDate);
+    //     const year = currentDate.getFullYear();
+    //     const key = `${weekNumber}${year}`;
+
+    //     if (!staffCardContentMap[key]) {
+    //         const newAssignedList: StaffCardContent[] = [];
+    //         const newNotAssignedList = [...STAFF_MEMBERS];
+    //         const newScheduleMap = new Map<string, SelectedSchedule>();
+
+    //         const newMap: StaffCardContentMap = {
+    //             ...staffCardContentMap,
+    //             [key]: {
+    //                 assigned: newAssignedList,
+    //                 notAssigned: newNotAssignedList,
+    //                 staffScheduleMap: newScheduleMap
+    //             }
+    //         };
+
+    //         setStaffCardContentMap(newMap);
+    //         setAssignedStaffList(newAssignedList);
+    //         setNotAssignedStaffList(newNotAssignedList);
+    //         setSelectedScheduleMap(newScheduleMap);
+    //     } else {
+    //         const currentWeekData = staffCardContentMap[key];
+    //         setAssignedStaffList(currentWeekData.assigned);
+    //         setNotAssignedStaffList(currentWeekData.notAssigned);
+    //         setSelectedScheduleMap(currentWeekData.staffScheduleMap);
+    //     }
+    // }, [currentDate, staffCardContentMap]);
+
     // Function to handle the current date change
     const onCurrentDateChange = (date: Date) => {
+        const currentKey =
+            getISOWeekNumberFromDate(currentDate).toString() +
+            currentDate.getFullYear().toString();
+
+        // Prepare the current state to be saved
+        const currentStaffData = {
+            assigned: [...assignedStaffList],
+            notAssigned: [...notAssignedStaffList],
+            staffScheduleMap: { ...selectedScheduleMap }
+        };
+
+        const weekNumber = getISOWeekNumberFromDate(date);
+        const year = date.getFullYear();
+        const newKey = `${weekNumber}${year}`;
+
+        let newAssignedList: SetStateAction<StaffCardContent[]>,
+            newNotAssignedList,
+            newSelectedScheduleMap;
+
+        if (!staffCardContentMap[newKey]) {
+            // Set new values for the new key
+            newAssignedList = [];
+            newNotAssignedList = [...STAFF_MEMBERS];
+            newSelectedScheduleMap = {};
+
+            setAssignedStaffList(newAssignedList);
+            setNotAssignedStaffList(newNotAssignedList);
+            setSelectedScheduleMap(newSelectedScheduleMap);
+        } else {
+            // Use existing values for the new key
+            newAssignedList = staffCardContentMap[newKey].assigned;
+            newNotAssignedList = staffCardContentMap[newKey].notAssigned;
+            newSelectedScheduleMap =
+                staffCardContentMap[newKey].staffScheduleMap;
+
+            setAssignedStaffList(newAssignedList);
+            setNotAssignedStaffList(newNotAssignedList);
+            setSelectedScheduleMap(newSelectedScheduleMap);
+        }
+
+        // TODO: STUDY THIS
+        // Update staffCardContentMap with current data and potentially new data
+        setStaffCardContentMap({
+            ...staffCardContentMap,
+            [currentKey]: currentStaffData,
+            ...(newKey !== currentKey && {
+                [newKey]: {
+                    assigned: newAssignedList,
+                    notAssigned: newNotAssignedList,
+                    staffScheduleMap: newSelectedScheduleMap
+                }
+            })
+        });
+
         setCurrentDate(date);
     };
 
@@ -106,6 +211,18 @@ const StaffScheduler = () => {
                     (staff) => staff.name === selectedStaff
                 );
                 if (!isAlreadyPresent) {
+                    // remove from notAssignedStaffList
+                    setNotAssignedStaffList((prevNotAssignedStaffList) => {
+                        const isAlreadyPresent = prevNotAssignedStaffList.some(
+                            (staff) => staff.name === selectedStaff
+                        );
+                        if (isAlreadyPresent) {
+                            return prevNotAssignedStaffList.filter(
+                                (staff) => staff.name !== selectedStaff
+                            );
+                        }
+                        return prevNotAssignedStaffList;
+                    });
                     return [
                         ...prevAssignedStaffList,
                         new StaffCardContent(selectedStaff!, 'TOTAL_HOUR')

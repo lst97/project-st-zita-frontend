@@ -1,3 +1,5 @@
+import StaffCardContent from './StaffCardContent';
+
 export class SelectedSchedule {
     year: number;
     week: number;
@@ -13,7 +15,15 @@ export class SelectedSchedule {
 export type StaffScheduleMap = {
     [username: string]: SelectedSchedule;
 };
+interface StaffAssignmentLists {
+    assigned: StaffCardContent[];
+    notAssigned: StaffCardContent[];
+    staffScheduleMap: StaffScheduleMap;
+}
 
+export type StaffCardContentMap = {
+    [key: string]: StaffAssignmentLists;
+};
 export class DateDuration {
     startDate: Date;
     endDate: Date;

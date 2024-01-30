@@ -12,7 +12,7 @@ import CustomTimeTableCell from './TimeTableCells';
 import { getSelectedCells } from '../../../utils/ScheduleHelpers';
 import { Paper } from '@mui/material';
 import { SelectedSchedule } from '../../../models/scheduler/ScheduleModel';
-import { getISOWeekNumber } from '../../../utils/DateTimeUtils';
+import { getISOWeekNumberFromDateString } from '../../../utils/DateTimeUtils';
 
 const SchedulePlaner = ({
     isEnabled,
@@ -100,7 +100,7 @@ const SchedulePlaner = ({
     const handleMouseUp = () => {
         if (!isEnabled) return;
         let year = parseInt(currentViewName.slice(-4), 10);
-        let weekNumber = getISOWeekNumber(currentViewName);
+        let weekNumber = getISOWeekNumberFromDateString(currentViewName);
         let selectedSchedule = new SelectedSchedule(
             year,
             weekNumber,
