@@ -1,6 +1,7 @@
 import { Paper } from '@mui/material';
 import StaffAppointment from '../../../models/scheduler/StaffAppointment';
 import {
+    AppointmentTooltip,
     Appointments,
     DateNavigator,
     MonthView,
@@ -11,6 +12,12 @@ import {
 } from '@devexpress/dx-react-scheduler-material-ui';
 import { ViewState } from '@devexpress/dx-react-scheduler';
 import { StaffScheduleMap } from '../../../models/scheduler/ScheduleModel';
+import {
+    Appointment,
+    AppointmentContent,
+    AppointmentHeader
+} from './Appointments';
+import { ColorUtils } from '../../../utils/ColorUtils';
 
 const APPOINTMENT_LENGTH = 30; // Each time-slot is 30 minutes
 
@@ -54,11 +61,22 @@ function dateGroupToAppointments(
         const endDate = new Date(
             group[group.length - 1].getTime() + APPOINTMENT_LENGTH * 60000
         );
-        return new StaffAppointment(staffName, startDate, endDate, index, '');
+        return new StaffAppointment(
+            staffName,
+            startDate,
+            endDate,
+            index,
+            '',
+            ColorUtils.getColorFor(staffName)
+        );
     });
 
     return appointments;
 }
+
+const handleDeleteAppointment = () => {
+    console.log('handleDeleteAppointment');
+};
 
 const ScheduleViewer = ({
     data,
@@ -101,10 +119,21 @@ const ScheduleViewer = ({
                 />
                 <WeekView startDayHour={8} endDayHour={16} />
                 <MonthView />
-                <Appointments />
+                <Appointments
+                    appointmentComponent={Appointment}
+                    appointmentContentComponent={AppointmentContent}
+                />
                 <Toolbar />
                 <DateNavigator />
                 <TodayButton />
+                <AppointmentTooltip
+                    headerComponent={(props) => (
+                        <AppointmentHeader
+                            {...props}
+                            onDelete={handleDeleteAppointment}
+                        />
+                    )}
+                />
             </Scheduler>
         </Paper>
     );

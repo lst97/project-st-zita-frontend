@@ -1,4 +1,4 @@
-import { SetStateAction, useEffect, useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import StaffCard from '../../common/cards/Cards';
 import SchedulePlaner from './SchedulePlaner';
 import ScheduleViewer from './ScheduleViewer';
@@ -12,11 +12,7 @@ import {
     StaffCardContentMap,
     StaffScheduleMap
 } from '../../../models/scheduler/ScheduleModel';
-import {
-    formatDateNavigatorText,
-    getISOWeekNumberFromDate,
-    getISOWeekNumberFromDateString
-} from '../../../utils/DateTimeUtils';
+import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
 
 const STAFF_MEMBERS = [
     new StaffCardContent('Tofu', 'TOTAL_HOUR'),
@@ -52,38 +48,6 @@ const StaffScheduler = () => {
                 staffScheduleMap: {}
             }
         });
-
-    // useEffect(() => {
-    //     const weekNumber = getISOWeekNumberFromDate(currentDate);
-    //     const year = currentDate.getFullYear();
-    //     const key = `${weekNumber}${year}`;
-
-    //     if (!staffCardContentMap[key]) {
-    //         const newAssignedList: StaffCardContent[] = [];
-    //         const newNotAssignedList = [...STAFF_MEMBERS];
-    //         const newScheduleMap = new Map<string, SelectedSchedule>();
-
-    //         const newMap: StaffCardContentMap = {
-    //             ...staffCardContentMap,
-    //             [key]: {
-    //                 assigned: newAssignedList,
-    //                 notAssigned: newNotAssignedList,
-    //                 staffScheduleMap: newScheduleMap
-    //             }
-    //         };
-
-    //         setStaffCardContentMap(newMap);
-    //         setAssignedStaffList(newAssignedList);
-    //         setNotAssignedStaffList(newNotAssignedList);
-    //         setSelectedScheduleMap(newScheduleMap);
-    //     } else {
-    //         const currentWeekData = staffCardContentMap[key];
-    //         setAssignedStaffList(currentWeekData.assigned);
-    //         setNotAssignedStaffList(currentWeekData.notAssigned);
-    //         setSelectedScheduleMap(currentWeekData.staffScheduleMap);
-    //     }
-    // }, [currentDate, staffCardContentMap]);
-
     // Function to handle the current date change
     const onCurrentDateChange = (date: Date) => {
         const currentKey =

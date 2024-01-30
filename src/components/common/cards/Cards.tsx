@@ -13,6 +13,7 @@ import {
 import { useState } from 'react';
 import StaffCardContent from '../../../models/scheduler/StaffCardContent';
 import { Typography } from '@mui/material';
+import { ColorUtils } from '../../../utils/ColorUtils';
 
 const StaffCard = ({
     onClick,
@@ -51,7 +52,13 @@ const StaffCard = ({
                 style={{ display: 'flex', width: '100%' }}
                 onClick={onClick}
             >
-                <StyledAvatar>S</StyledAvatar>
+                <StyledAvatar
+                    src=""
+                    alt="Description"
+                    sx={{ backgroundColor: ColorUtils.getColorFor(data.name) }}
+                >
+                    {data.name[0]}
+                </StyledAvatar>
                 <StyledCardContent>
                     <Typography variant="h6">{data.name}</Typography>
                     <Typography variant="body2" color="textSecondary">
