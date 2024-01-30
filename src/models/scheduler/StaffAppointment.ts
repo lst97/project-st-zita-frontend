@@ -1,5 +1,5 @@
-class StaffSchedule {
-    name: string;
+class StaffAppointment {
+    title: string;
     startDate: Date;
     endDate: Date;
     id: number;
@@ -11,7 +11,7 @@ class StaffSchedule {
         id: number,
         location: string
     ) {
-        this.name = name;
+        this.title = name;
         this.startDate = startDate;
         this.endDate = endDate;
         this.id = id;
@@ -19,4 +19,4 @@ class StaffSchedule {
     }
 }
 
-export default StaffSchedule;
+export default StaffAppointment;

@@ -42,3 +42,14 @@ function dateStringDurationToDateDuration(dateString: string) {
     const endDate = new Date(`${endStr}, ${year}`);
     return new DateDuration(startDate, endDate);
 }
+
+// "Sun Jan 28 2024 12:00:00 GMT+1100 (Australian Eastern Daylight Time)" -> '2024-01-28T09:00'
+export function convertScheduleStringToAppointmentDateString(
+    scheduleString: string
+): string {
+    // Parse the string into a Date object
+    const date = new Date(scheduleString);
+
+    // Format the Date
+    return date.toISOString().slice(0, 16).replace('T', ' ');
+}

@@ -17,11 +17,19 @@ import { getISOWeekNumber } from '../../../utils/DateTimeUtils';
 const SchedulePlaner = ({
     isEnabled,
     data,
-    onFinish
+    onFinish,
+    currentDate,
+    onCurrentDateChange,
+    currentViewName,
+    onCurrentViewNameChange
 }: {
     isEnabled: boolean;
     data?: string[];
     onFinish: (selectedCells: SelectedSchedule) => void;
+    currentDate: Date;
+    onCurrentDateChange: (date: Date) => void;
+    currentViewName: string;
+    onCurrentViewNameChange: (viewName: string) => void;
 }) => {
     const [selectedCells, setSelectedCells] = useState<string[]>([]);
 
@@ -34,19 +42,6 @@ const SchedulePlaner = ({
     const [initialAction, setInitialAction] = useState<'select' | 'unselect'>(
         'select'
     );
-
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [currentViewName, setCurrentViewName] = useState('Week');
-
-    // Function to handle the current date change
-    const onCurrentDateChange = (date: Date) => {
-        setCurrentDate(date);
-    };
-
-    // Function to handle the view name change
-    const onCurrentViewNameChange = (viewName: string) => {
-        setCurrentViewName(viewName);
-    };
 
     const handleMouseDown = (
         event: React.MouseEvent<HTMLDivElement>,

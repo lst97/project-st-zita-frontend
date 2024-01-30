@@ -30,6 +30,19 @@ const StaffScheduler = () => {
     const [selectedScheduleMap, setSelectedScheduleMap] =
         useState<StaffScheduleMap>({});
 
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentViewName, setCurrentViewName] = useState('Week');
+
+    // Function to handle the current date change
+    const onCurrentDateChange = (date: Date) => {
+        setCurrentDate(date);
+    };
+
+    // Function to handle the view name change
+    const onCurrentViewNameChange = (viewName: string) => {
+        setCurrentViewName(viewName);
+    };
+
     const handleCardClick = (name: string) => {
         if (selectedStaff === name) {
             setSelectedStaff(null);
@@ -123,6 +136,10 @@ const StaffScheduler = () => {
             <Grid xs={5}>
                 <div>
                     <SchedulePlaner
+                        currentDate={currentDate}
+                        currentViewName={currentViewName}
+                        onCurrentDateChange={onCurrentDateChange}
+                        onCurrentViewNameChange={onCurrentViewNameChange}
                         isEnabled={selectedStaff != null}
                         data={selectedScheduleMap[selectedStaff!]?.schedule}
                         onFinish={handleSelectionFinish}
@@ -172,7 +189,13 @@ const StaffScheduler = () => {
                 </div>
             </Grid>
             <Grid xs={7}>
-                <ScheduleViewer data={[]} />
+                <ScheduleViewer
+                    data={selectedScheduleMap}
+                    currentDate={currentDate}
+                    currentViewName={currentViewName}
+                    onCurrentDateChange={onCurrentDateChange}
+                    onCurrentViewNameChange={onCurrentViewNameChange}
+                />
             </Grid>
         </Grid>
     );
