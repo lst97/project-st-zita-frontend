@@ -1,12 +1,9 @@
-import React from "react";
-import Button from "@mui/material/Button";
+import HomePage from './pages/HomePage/HomePage';
 
 function App() {
   return (
     <div>
-      <Button variant="contained" color="primary">
-        Hello World
-      </Button>
+      <HomePage></HomePage>
     </div>
   );
 }
