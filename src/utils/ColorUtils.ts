@@ -55,4 +55,8 @@ export class ColorUtils {
 
         return newColor;
     }
+
+    static setColorFor(user: string, color: string): void {
+        this.colorMap.set(user, color);
+    }
 }

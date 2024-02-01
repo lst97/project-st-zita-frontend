@@ -24,7 +24,7 @@ const StaffCard = ({
     onClick: () => void;
     onDelete: (staff: StaffCardContent) => void | null;
     isSelected: boolean;
-    data: { name: string; description: string };
+    data: StaffCardContent;
 }) => {
     const [anchorEl, setAnchorEl] = useState(null);
 

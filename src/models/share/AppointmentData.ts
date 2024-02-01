@@ -3,16 +3,16 @@ export class AppointmentData {
     groupId: string;
     weekViewId: string;
     location: string;
-    startDate: Date;
-    endDate: Date;
+    startDate: string;
+    endDate: string;
 
     constructor(
         username: string,
         groupId: string,
         weekViewId: string,
         location: string,
-        startDate: Date,
-        endDate: Date
+        startDate: string,
+        endDate: string
     ) {
         this.username = username;
         this.groupId = groupId;

@@ -1,4 +1,4 @@
-class UserData {
+export class UserData {
     username: string;
     email: string;
     image?: string;
@@ -23,5 +23,3 @@ class UserData {
         }
     }
 }
-
-export default UserData;

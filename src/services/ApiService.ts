@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
-import UserData from '../models/share/UserData';
+import { formatUrl } from '../utils/FormatterUtils';
+import { AppointmentData } from '../models/share/AppointmentData';
+import { UserData } from '../models/share/UserData';
 class ApiService {
     private _axiosInstance;
 
@@ -57,7 +59,21 @@ export class UserApiService {
     static async fetchUserData() {
         try {
             const response = await apiService.get(API_ENDPOINTS.fetchUsersData);
-            return response.data as UserData;
+            return response.data as UserData[];
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async fetchAppointmentsWeekViewData(
+        id: string
+    ): Promise<AppointmentData[]> {
+        try {
+            const url = formatUrl(API_ENDPOINTS.fetchAppointmentsData, {
+                weekViewId: id
+            });
+            const response = await apiService.get(url);
+            return response.data as AppointmentData[];
         } catch (error) {
             throw error;
         }

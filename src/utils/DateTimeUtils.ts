@@ -1,5 +1,3 @@
-import { DateDuration } from '../models/scheduler/ScheduleModel';
-
 export function getISOWeekNumberFromDate(date: Date): number {
     // Create a new date object for the target date
     const target = new Date(date.valueOf());
@@ -58,6 +56,10 @@ export function convertScheduleStringToAppointmentDateString(
 
     // Format the Date
     return date.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+export function convertDateToScheduleString(date: Date): string {
+    return date.toISOString();
 }
 
 export function formatDateNavigatorText(date: Date, viewName: string) {
