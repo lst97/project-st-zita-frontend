@@ -1,4 +1,4 @@
-import { SetStateAction, useState } from 'react';
+import { SetStateAction, useEffect, useState } from 'react';
 import StaffCard from '../../common/cards/Cards';
 import SchedulePlaner from './SchedulePlaner';
 import ScheduleViewer from './ScheduleViewer';
@@ -13,6 +13,8 @@ import {
     StaffScheduleMap
 } from '../../../models/scheduler/ScheduleModel';
 import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
+import UserData from '../../../models/share/UserData';
+import { UserApiService } from '../../../services/ApiService';
 
 const STAFF_MEMBERS = [
     new StaffCardContent('Tofu', 'TOTAL_HOUR'),
@@ -23,6 +25,7 @@ const STAFF_MEMBERS = [
 ];
 
 const StaffScheduler = () => {
+    const [userData, setUserData] = useState<UserData>();
     const [selectedStaff, setSelectedStaff] = useState<string | null>();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [assignedStaffList, setAssignedStaffList] = useState<
@@ -211,6 +214,24 @@ const StaffScheduler = () => {
             removeSchedule(selectedStaff!);
         }
     };
+    // Step 1: fetch user data
+    // Step 2: fetch appointment data base on current scheduler week view (week number, year)
+    // Step 3: put the user to different lists based on their availability for the week
+    // Step 4: map the appointments to the scheduleMap
+
+    const handleFetchedUserData = () => {};
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            setUserData(await UserApiService.fetchUserData());
+        };
+
+        fetchUserData();
+    }, []);
+
+    useEffect(() => {
+        handleFetchedUserData();
+    }, [userData]);
 
     return (
         <Grid container spacing={2}>
