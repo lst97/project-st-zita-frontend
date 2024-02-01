@@ -9,7 +9,7 @@ import {
 } from '@devexpress/dx-react-scheduler-material-ui';
 import { useEffect, useState } from 'react';
 import CustomTimeTableCell from './TimeTableCells';
-import { getSelectedCells } from '../../../utils/ScheduleHelpers';
+import { getSelectedCells } from '../../../utils/SchedulerHelpers';
 import { Paper } from '@mui/material';
 import { SelectedSchedule } from '../../../models/scheduler/ScheduleModel';
 import { getISOWeekNumberFromDateString } from '../../../utils/DateTimeUtils';
@@ -34,7 +34,39 @@ const SchedulePlaner = ({
     const [selectedCells, setSelectedCells] = useState<string[]>([]);
 
     useEffect(() => {
-        setSelectedCells(data ?? []);
+        // required Sun Jan 28 2024 10:30:00 GMT+1100 (Australian Eastern Daylight Time)
+        if (!data) return;
+
+        let dates = Array.from(new Set(data));
+
+        for (let date of dates) {
+            // Create a Date object from the ISO string
+            const dateObj = new Date(date);
+
+            // Use toLocaleString to format the date in the desired timezone
+            const formattedDateString = dateObj
+                .toLocaleString('en-US', {
+                    timeZone: 'Australia/Melbourne',
+                    weekday: 'short', // "Sun"
+                    year: 'numeric', // "2024"
+                    month: 'short', // "Jan"
+                    day: '2-digit', // "28"
+                    hour: '2-digit', // "10"
+                    minute: '2-digit', // "00"
+                    second: '2-digit', // "00"
+                    hour12: false // Use 24-hour time
+                })
+                .replace(/,/g, '');
+
+            // Since toLocaleString may not include the timezone abbreviation directly,
+            const timezoneAbbreviation =
+                'GMT+1100 (Australian Eastern Daylight Time)';
+
+            setSelectedCells((prevSelectedCells) => [
+                ...prevSelectedCells,
+                `${formattedDateString} ${timezoneAbbreviation}`
+            ]);
+        }
     }, [data]); // Dependency array, useEffect runs when `data` changes
 
     const [isDragging, setIsDragging] = useState(false);

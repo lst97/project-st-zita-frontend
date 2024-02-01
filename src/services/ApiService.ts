@@ -3,6 +3,18 @@ import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
 import { formatUrl } from '../utils/FormatterUtils';
 import { AppointmentData } from '../models/share/AppointmentData';
 import { UserData } from '../models/share/UserData';
+import moment from 'moment-timezone';
+
+import {
+    SelectedSchedule,
+    StaffScheduleMap
+} from '../models/scheduler/ScheduleModel';
+import { v4 as uuidv4 } from 'uuid';
+import {
+    parseAndSortDate,
+    groupContinuesTime,
+    dateGroupToAppointments
+} from '../utils/SchedulerHelpers';
 class ApiService {
     private _axiosInstance;
 
@@ -74,6 +86,40 @@ export class UserApiService {
             });
             const response = await apiService.get(url);
             return response.data as AppointmentData[];
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async createAppointmentsData(
+        staffName: string,
+        weekViewId: string,
+        selectedSchedule: SelectedSchedule
+    ) {
+        const appointmentsData = new Array<AppointmentData>();
+
+        let sortedDateString = parseAndSortDate(selectedSchedule.schedule);
+        let groupedDates = groupContinuesTime(sortedDateString);
+
+        for (const group of groupedDates) {
+            const appointmentData = new AppointmentData(
+                staffName,
+                uuidv4(),
+                weekViewId,
+                '',
+                moment(group[0]).tz('Australia/Melbourne').format(),
+                moment(group[group.length - 1])
+                    .tz('Australia/Melbourne')
+                    .format()
+            );
+            appointmentsData.push(appointmentData);
+        }
+
+        try {
+            await apiService.post(
+                API_ENDPOINTS.createAppointments,
+                appointmentsData
+            );
         } catch (error) {
             throw error;
         }

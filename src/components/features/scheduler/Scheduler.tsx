@@ -136,7 +136,19 @@ const StaffScheduler = () => {
             throw new Error('User not found');
         }
 
-        if (selectedSchedule.schedule.length > 0) {
+        if (selectedSchedule.schedule.length > 0 && selectedStaff) {
+            // API call to add appointment
+            const weekNumber = getISOWeekNumberFromDate(currentDate).toString();
+            const year = currentDate.getFullYear().toString();
+
+            const weekViewId = weekNumber + '-' + year;
+
+            UserApiService.createAppointmentsData(
+                selectedStaff,
+                weekViewId,
+                selectedSchedule
+            );
+
             setSelectedScheduleMap((prevSelectedScheduleMap) => ({
                 ...prevSelectedScheduleMap,
                 [selectedStaff!]: selectedSchedule
@@ -200,8 +212,8 @@ const StaffScheduler = () => {
     // Step 3: put the user to different lists based on their availability for the week
     // Step 4: map the appointments to the scheduleMap
     const fetchAppointmentWeekViewData = async () => {
-        const weekNumber = getISOWeekNumberFromDate(currentDate);
-        const year = currentDate.getFullYear();
+        const weekNumber = getISOWeekNumberFromDate(currentDate).toString();
+        const year = currentDate.getFullYear().toString();
 
         const weekViewId = weekNumber + '-' + year;
 
@@ -216,16 +228,27 @@ const StaffScheduler = () => {
 
             if (newSelectedScheduleMap[staffName] == null) {
                 newSelectedScheduleMap[staffName] = new SelectedSchedule(
-                    year,
-                    weekNumber,
+                    parseInt(year),
+                    parseInt(weekNumber),
                     []
                 );
             }
 
-            newSelectedScheduleMap[staffName].schedule.push(
-                new Date(appointment.startDate).toISOString(),
-                new Date(appointment.endDate).toISOString()
-            );
+            const startDate = new Date(appointment.startDate);
+            const endDate = new Date(appointment.endDate);
+
+            // Temporary variable to hold the current date being processed
+            let currentDate = new Date(startDate);
+
+            while (currentDate <= endDate) {
+                // Push the current date in ISO format to the schedule array
+                newSelectedScheduleMap[staffName].schedule.push(
+                    currentDate.toISOString()
+                );
+
+                // Increment the current date by 30 minutes
+                currentDate = new Date(currentDate.getTime() + 30 * 60 * 1000); // 30 minutes in milliseconds
+            }
         }
 
         // Prepare the current state to be saved
@@ -260,6 +283,11 @@ const StaffScheduler = () => {
                         user.image
                     )
                 );
+
+                setSelectedScheduleMap((prevSelectedScheduleMap) => ({
+                    ...prevSelectedScheduleMap,
+                    [user.username]: newSelectedScheduleMap[user.username]
+                }));
             }
         }
 
@@ -279,7 +307,7 @@ const StaffScheduler = () => {
 
         setAssignedStaffList(newAssignedList);
         setNotAssignedStaffList(newNotAssignedList);
-        setSelectedScheduleMap(newSelectedScheduleMap);
+        // setSelectedScheduleMap(newSelectedScheduleMap);
     };
 
     useEffect(() => {
