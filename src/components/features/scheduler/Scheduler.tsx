@@ -16,6 +16,7 @@ import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
 import { UserData } from '../../../models/share/UserData';
 import { UserApiService } from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
+import DataSendingIndicator from '../../common/indicators/DataSendingIndicator';
 
 const StaffScheduler = () => {
     const [userDataList, setUserDataList] = useState<UserData[]>([]);
@@ -36,6 +37,9 @@ const StaffScheduler = () => {
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [currentViewName, setCurrentViewName] = useState('Week');
+
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const initialKey =
         getISOWeekNumberFromDate(currentDate).toString() +
@@ -82,32 +86,31 @@ const StaffScheduler = () => {
         });
     };
 
-    const handleAddStaff = () => {
-        // TODO
-        // const user = userDataList?.find(
-        //     (user) => user.username === selectedStaff
-        // );
-        // if (!user) {
-        //     throw new Error('User not found');
-        // }
-        // // Logic to add new staff member to notAssignedStaffList
-        // setNotAssignedStaffList((prevNotAssignedStaffList) => {
-        //     const isAlreadyPresent = prevNotAssignedStaffList.some(
-        //         (staff) => staff.name === selectedStaff
-        //     );
-        //     if (!isAlreadyPresent) {
-        //         return [
-        //             ...prevNotAssignedStaffList,
-        //             new StaffCardContent(
-        //                 selectedStaff!,
-        //                 'TOTAL_HOUR',
-        //                 user.color,
-        //                 user.image
-        //             )
-        //         ];
-        //     }
-        //     return prevNotAssignedStaffList;
-        // });
+    const handleAddStaff = (newStaff: UserData) => {
+        setUserDataList((prevUserDataList) => [...prevUserDataList, newStaff]);
+
+        // API call to add new staff
+        UserApiService.createStaff(newStaff);
+
+        // Logic to add new staff member to notAssignedStaffList
+        setNotAssignedStaffList((prevNotAssignedStaffList) => {
+            const isAlreadyPresent = prevNotAssignedStaffList.some(
+                (staff) => staff.name === selectedStaff
+            );
+            if (!isAlreadyPresent) {
+                return [
+                    ...prevNotAssignedStaffList,
+                    new StaffCardContent(
+                        newStaff.username,
+                        '00:00',
+                        newStaff.color,
+                        newStaff.image,
+                        newStaff.phoneNumber
+                    )
+                ];
+            }
+            return prevNotAssignedStaffList;
+        });
     };
 
     const handleCardDelete = (staff: StaffCardContent) => {
@@ -359,6 +362,7 @@ const StaffScheduler = () => {
             setAssignedStaffList(staffCardContent.assigned);
             setNotAssignedStaffList(staffCardContent.notAssigned);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [staffCardContentMap]);
 
     useEffect(() => {
@@ -367,6 +371,7 @@ const StaffScheduler = () => {
                 selectedScheduleMap[selectedStaff!]?.schedule || []
             );
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedStaff]);
 
     useEffect(() => {
@@ -380,6 +385,10 @@ const StaffScheduler = () => {
         <Grid container spacing={2}>
             <Grid xs={5}>
                 <div>
+                    <DataSendingIndicator
+                        isSuccess={isSuccess}
+                        isLoading={isLoading}
+                    />
                     <SchedulePlaner
                         currentDate={currentDate}
                         currentViewName={currentViewName}

@@ -53,7 +53,6 @@ const StaffCard = ({
                 onClick={onClick}
             >
                 <StyledAvatar
-                    src=""
                     alt="Description"
                     sx={{ backgroundColor: ColorUtils.getColorFor(data.name) }}
                 >

@@ -113,6 +113,14 @@ export class UserApiService {
         }
     }
 
+    static async createStaff(staff: UserData) {
+        try {
+            await apiService.post(API_ENDPOINTS.createUser, staff);
+        } catch (error) {
+            throw error;
+        }
+    }
+
     static async createAppointmentsData(
         staffName: string,
         weekViewId: string,
