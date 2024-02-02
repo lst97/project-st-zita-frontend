@@ -5,15 +5,11 @@ import { AppointmentData } from '../models/share/AppointmentData';
 import { UserData } from '../models/share/UserData';
 import moment from 'moment-timezone';
 
-import {
-    SelectedSchedule,
-    StaffScheduleMap
-} from '../models/scheduler/ScheduleModel';
+import { SelectedSchedule } from '../models/scheduler/ScheduleModel';
 import { v4 as uuidv4 } from 'uuid';
 import {
     parseAndSortDate,
-    groupContinuesTime,
-    dateGroupToAppointments
+    groupContinuesTime
 } from '../utils/SchedulerHelpers';
 class ApiService {
     private _axiosInstance;
@@ -91,12 +87,40 @@ export class UserApiService {
         }
     }
 
+    static async replaceAppointmentsData(
+        staffName: string,
+        weekViewId: string,
+        selectedSchedule: SelectedSchedule
+    ) {
+        try {
+            const url = formatUrl(
+                API_ENDPOINTS.deleteAppointmentsForEntireWeek,
+                {
+                    weekViewId: weekViewId
+                }
+            );
+
+            await apiService.delete(url);
+
+            this.createAppointmentsData(
+                staffName,
+                weekViewId,
+                selectedSchedule
+            );
+        } catch (error) {
+            throw error;
+        }
+    }
+
     static async createAppointmentsData(
         staffName: string,
         weekViewId: string,
         selectedSchedule: SelectedSchedule
     ) {
         const appointmentsData = new Array<AppointmentData>();
+        if (selectedSchedule.schedule.length === 0) {
+            return;
+        }
 
         let sortedDateString = parseAndSortDate(selectedSchedule.schedule);
         let groupedDates = groupContinuesTime(sortedDateString);

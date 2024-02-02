@@ -74,9 +74,8 @@ const StaffScheduler = () => {
 
     const removeSchedule = (keyToRemove: string) => {
         setSelectedScheduleMap((prevMap) => {
-            // Create a new object excluding the key to remove
-            const { [keyToRemove]: _, ...rest } = prevMap;
-            return rest;
+            const { [keyToRemove]: _, ...newMap } = prevMap;
+            return { ...newMap };
         });
     };
 
@@ -143,14 +142,14 @@ const StaffScheduler = () => {
 
             const weekViewId = weekNumber + '-' + year;
 
-            UserApiService.createAppointmentsData(
+            UserApiService.replaceAppointmentsData(
                 selectedStaff,
                 weekViewId,
                 selectedSchedule
             );
 
-            setSelectedScheduleMap((prevSelectedScheduleMap) => ({
-                ...prevSelectedScheduleMap,
+            setSelectedScheduleMap((prevMap) => ({
+                ...prevMap,
                 [selectedStaff!]: selectedSchedule
             }));
 
@@ -186,6 +185,20 @@ const StaffScheduler = () => {
                 return prevAssignedStaffList;
             });
         } else {
+            // API call to remove appointment
+
+            const weekNumber = getISOWeekNumberFromDate(currentDate).toString();
+            const year = currentDate.getFullYear().toString();
+            const weekViewId = weekNumber + '-' + year;
+
+            if (selectedStaff) {
+                UserApiService.replaceAppointmentsData(
+                    selectedStaff,
+                    weekViewId,
+                    selectedSchedule
+                );
+            }
+
             setNotAssignedStaffList((prevNotAssignedStaffList) => {
                 const isAlreadyPresent = prevNotAssignedStaffList.some(
                     (staff) => staff.name === selectedStaff
@@ -212,6 +225,8 @@ const StaffScheduler = () => {
     // Step 3: put the user to different lists based on their availability for the week
     // Step 4: map the appointments to the scheduleMap
     const fetchAppointmentWeekViewData = async () => {
+        if (userDataList == null || userDataList.length === 0) return;
+
         const weekNumber = getISOWeekNumberFromDate(currentDate).toString();
         const year = currentDate.getFullYear().toString();
 
@@ -251,63 +266,45 @@ const StaffScheduler = () => {
             }
         }
 
-        // Prepare the current state to be saved
-        const currentStaffData = {
-            assigned: [...assignedStaffList],
-            notAssigned: [...notAssignedStaffList],
-            staffScheduleMap: { ...selectedScheduleMap }
-        };
-
         let newAssignedList: SetStateAction<StaffCardContent[]>;
         newAssignedList = [];
         let newNotAssignedList: SetStateAction<StaffCardContent[]>;
         newNotAssignedList = [];
         const newKey = `${weekNumber}-${year}`;
 
-        for (const user of userDataList!) {
-            if (newSelectedScheduleMap[user.username] == null) {
-                newNotAssignedList.push(
+        for (const user of userDataList) {
+            const staffName = user.username;
+            if (newSelectedScheduleMap[staffName] != null) {
+                newAssignedList.push(
                     new StaffCardContent(
-                        user.username,
+                        staffName,
                         'TOTAL_HOUR',
                         user.color,
                         user.image
                     )
                 );
             } else {
-                newAssignedList.push(
+                newNotAssignedList.push(
                     new StaffCardContent(
-                        user.username,
+                        staffName,
                         'TOTAL_HOUR',
                         user.color,
                         user.image
                     )
                 );
-
-                setSelectedScheduleMap((prevSelectedScheduleMap) => ({
-                    ...prevSelectedScheduleMap,
-                    [user.username]: newSelectedScheduleMap[user.username]
-                }));
             }
         }
 
-        // TODO: STUDY THIS
-        // Update staffCardContentMap with current data and potentially new data
         setStaffCardContentMap({
             ...staffCardContentMap,
-            [weekViewId]: currentStaffData,
-            ...(newKey !== weekViewId && {
-                [newKey]: {
-                    assigned: newAssignedList,
-                    notAssigned: newNotAssignedList,
-                    staffScheduleMap: newSelectedScheduleMap
-                }
-            })
+            [newKey]: {
+                assigned: newAssignedList,
+                notAssigned: newNotAssignedList,
+                staffScheduleMap: newSelectedScheduleMap
+            }
         });
 
-        setAssignedStaffList(newAssignedList);
-        setNotAssignedStaffList(newNotAssignedList);
-        // setSelectedScheduleMap(newSelectedScheduleMap);
+        setSelectedScheduleMap(newSelectedScheduleMap);
     };
 
     useEffect(() => {
@@ -337,71 +334,30 @@ const StaffScheduler = () => {
     }, []);
 
     useEffect(() => {
+        if (userDataList == null || userDataList.length === 0) return;
+        if (Object.entries(staffCardContentMap).length === 0) return;
+
+        const key =
+            getISOWeekNumberFromDate(currentDate).toString() +
+            '-' +
+            currentDate.getFullYear().toString();
+        const staffCardContent = staffCardContentMap[key];
+
+        if (
+            staffCardContent.assigned.length > 0 ||
+            staffCardContent.notAssigned.length > 0
+        ) {
+            setAssignedStaffList(staffCardContent.assigned);
+            setNotAssignedStaffList(staffCardContent.notAssigned);
+        }
+    }, [staffCardContentMap]);
+
+    useEffect(() => {
         if (userDataList && userDataList.length > 0) {
             fetchAppointmentWeekViewData();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userDataList]);
-
-    useEffect(() => {
-        if (Object.keys(selectedScheduleMap).length === 0) return;
-
-        for (const userData of userDataList!) {
-            if (
-                selectedScheduleMap[userData.username] != null &&
-                selectedScheduleMap[userData.username].schedule.length > 0
-            ) {
-                setAssignedStaffList((prevAssignedStaffList) => {
-                    const isAlreadyPresent = prevAssignedStaffList.some(
-                        (staff) => staff.name === selectedStaff
-                    );
-                    if (!isAlreadyPresent) {
-                        // remove from notAssignedStaffList
-                        setNotAssignedStaffList((prevNotAssignedStaffList) => {
-                            const isAlreadyPresent =
-                                prevNotAssignedStaffList.some(
-                                    (staff) => staff.name === selectedStaff
-                                );
-                            if (isAlreadyPresent) {
-                                return prevNotAssignedStaffList.filter(
-                                    (staff) => staff.name !== selectedStaff
-                                );
-                            }
-                            return prevNotAssignedStaffList;
-                        });
-                        return [
-                            ...prevAssignedStaffList,
-                            new StaffCardContent(
-                                selectedStaff!,
-                                'TOTAL_HOUR',
-                                userData.color,
-                                userData.image
-                            )
-                        ];
-                    }
-                    return prevAssignedStaffList;
-                });
-            } else {
-                setNotAssignedStaffList((prevNotAssignedStaffList) => {
-                    const isAlreadyPresent = prevNotAssignedStaffList.some(
-                        (staff) => staff.name === selectedStaff
-                    );
-                    if (!isAlreadyPresent) {
-                        return [
-                            ...prevNotAssignedStaffList,
-                            new StaffCardContent(
-                                selectedStaff!,
-                                'TOTAL_HOUR',
-                                userData.color,
-                                userData.image
-                            )
-                        ];
-                    }
-                    return prevNotAssignedStaffList;
-                });
-            }
-        }
-    }, [selectedScheduleMap, selectedStaff, userDataList]);
 
     return (
         <Grid container spacing={2}>

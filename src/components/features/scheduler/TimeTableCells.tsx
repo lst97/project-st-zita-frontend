@@ -3,6 +3,7 @@ import { StyledTimeTableCell } from './scheduler.style';
 const CustomTimeTableCell = ({
     onCellEnter,
     onCellMouseDown,
+    onCellMouseUp,
     isDisabled,
     selectedCells,
     startDate,
@@ -10,6 +11,7 @@ const CustomTimeTableCell = ({
 }: {
     onCellEnter: (date: Date) => void;
     isDisabled: boolean;
+    onCellMouseUp: () => void;
     onCellMouseDown: (
         event: React.MouseEvent<HTMLDivElement>,
         date: Date
@@ -26,6 +28,7 @@ const CustomTimeTableCell = ({
             disabled={isDisabled}
             onMouseEnter={() => onCellEnter(startDate)}
             onMouseDown={(event: any) => onCellMouseDown(event, startDate)}
+            onMouseUp={onCellMouseUp}
         />
     );
 };
