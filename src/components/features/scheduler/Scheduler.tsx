@@ -27,6 +27,9 @@ const StaffScheduler = () => {
     const [notAssignedStaffList, setNotAssignedStaffList] = useState<
         StaffCardContent[]
     >([]);
+    const [selectedPlannerCells, setSelectedPlannerCells] = useState<string[]>(
+        []
+    );
 
     const [selectedScheduleMap, setSelectedScheduleMap] =
         useState<StaffScheduleMap>({});
@@ -295,6 +298,12 @@ const StaffScheduler = () => {
             }
         }
 
+        if (selectedStaff != null) {
+            setSelectedPlannerCells(
+                newSelectedScheduleMap[selectedStaff]?.schedule || []
+            );
+        }
+
         setStaffCardContentMap({
             ...staffCardContentMap,
             [newKey]: {
@@ -353,6 +362,14 @@ const StaffScheduler = () => {
     }, [staffCardContentMap]);
 
     useEffect(() => {
+        if (selectedStaff != null) {
+            setSelectedPlannerCells(
+                selectedScheduleMap[selectedStaff!]?.schedule || []
+            );
+        }
+    }, [selectedStaff]);
+
+    useEffect(() => {
         if (userDataList && userDataList.length > 0) {
             fetchAppointmentWeekViewData();
         }
@@ -369,7 +386,7 @@ const StaffScheduler = () => {
                         onCurrentDateChange={onCurrentDateChange}
                         onCurrentViewNameChange={onCurrentViewNameChange}
                         isEnabled={selectedStaff != null}
-                        data={selectedScheduleMap[selectedStaff!]?.schedule}
+                        data={selectedPlannerCells}
                         onFinish={handleSelectionFinish}
                     />
                     <StaffAccordion title="Assigned">

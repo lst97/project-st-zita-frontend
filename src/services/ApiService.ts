@@ -94,9 +94,10 @@ export class UserApiService {
     ) {
         try {
             const url = formatUrl(
-                API_ENDPOINTS.deleteAppointmentsForEntireWeek,
+                API_ENDPOINTS.deleteAppointmentsByWeekViewIdAndUserName,
                 {
-                    weekViewId: weekViewId
+                    weekViewId: weekViewId,
+                    staffName: staffName
                 }
             );
 
