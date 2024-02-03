@@ -43,6 +43,13 @@ const ScheduleViewer = ({
     let appointments = new Map<string, StaffAppointment[]>();
 
     Object.entries(data).forEach(([staffName, selectedSchedule]) => {
+        if (
+            selectedSchedule == null ||
+            selectedSchedule.schedule == null ||
+            selectedSchedule.schedule.length === 0
+        ) {
+            return;
+        }
         let sortedDateString = parseAndSortDate(selectedSchedule.schedule);
         let groupedDates = groupContinuesTime(sortedDateString);
         appointments.set(

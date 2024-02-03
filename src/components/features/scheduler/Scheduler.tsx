@@ -110,11 +110,11 @@ const StaffScheduler = () => {
             throw new Error('User not found');
         }
 
-        if (selectedSchedule.schedule.length > 0 && selectedStaff) {
-            // API call to add appointment
+        // API call to remove appointment
+
+        if (selectedStaff) {
             const weekNumber = getISOWeekNumberFromDate(currentDate).toString();
             const year = currentDate.getFullYear().toString();
-
             const weekViewId = weekNumber + '-' + year;
 
             UserApiService.replaceAppointmentsData(
@@ -125,22 +125,8 @@ const StaffScheduler = () => {
 
             setSelectedScheduleMap((prevMap) => ({
                 ...prevMap,
-                [selectedStaff!]: selectedSchedule
+                [selectedStaff!]: selectedSchedule ?? []
             }));
-        } else {
-            // API call to remove appointment
-
-            const weekNumber = getISOWeekNumberFromDate(currentDate).toString();
-            const year = currentDate.getFullYear().toString();
-            const weekViewId = weekNumber + '-' + year;
-
-            if (selectedStaff) {
-                UserApiService.replaceAppointmentsData(
-                    selectedStaff,
-                    weekViewId,
-                    selectedSchedule
-                );
-            }
         }
     };
     // Step 1: fetch user data
@@ -235,14 +221,10 @@ const StaffScheduler = () => {
     };
 
     useEffect(() => {
-        if (userDataList == null || userDataList.length === 0) {
-            setSelectedScheduleMap({});
-            return;
-        }
-
         fetchAppointmentWeekViewData();
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentDate, userDataList]);
+    }, [currentDate]);
 
     const fetchUserData = async () => {
         const users = await UserApiService.fetchUserData();
@@ -292,8 +274,17 @@ const StaffScheduler = () => {
                         onFinish={handleSelectionFinish}
                     />
                     <StaffAccordion title="Assigned">
-                        {userDataList.map((staff) =>
-                            selectedScheduleMap[staff.username] != null ? (
+                        {Object.keys(selectedScheduleMap).map((username) => {
+                            // Find the user data in userDataList that matches the current username
+                            const staff = userDataList.find(
+                                (user) => user.username === username
+                            );
+
+                            const scheduleValue = selectedScheduleMap[username];
+
+                            // Only render StaffCard if staff data is found
+                            return staff &&
+                                scheduleValue.schedule.length > 0 ? (
                                 <StaffCard
                                     key={staff.username}
                                     onDelete={handleCardDelete}
@@ -313,14 +304,21 @@ const StaffScheduler = () => {
                                         selectedStaff === staff.username
                                     }
                                 />
-                            ) : (
-                                <></>
-                            )
-                        )}
+                            ) : null; // If no matching staff data is found, render nothing
+                        })}
                     </StaffAccordion>
+
                     <StaffAccordion title="Not Assigned">
-                        {userDataList.map((staff) =>
-                            selectedScheduleMap[staff.username] == null ? (
+                        {userDataList
+                            .filter(
+                                (staff) =>
+                                    !(
+                                        selectedScheduleMap[staff.username] &&
+                                        selectedScheduleMap[staff.username]
+                                            .schedule.length > 0
+                                    )
+                            )
+                            .map((staff) => (
                                 <StaffCard
                                     key={staff.username}
                                     onDelete={handleCardDelete}
@@ -340,11 +338,9 @@ const StaffScheduler = () => {
                                         selectedStaff === staff.username
                                     }
                                 />
-                            ) : (
-                                <></>
-                            )
-                        )}
+                            ))}
                     </StaffAccordion>
+
                     <Button
                         variant="contained"
                         color="primary"
