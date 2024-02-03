@@ -9,5 +9,6 @@ export const API_ENDPOINTS = {
     createUser: `${API_BASE_URL}/users`,
     fetchAppointmentsData: `${API_BASE_URL}/appointments/week_view/{weekViewId}`,
     createAppointments: `${API_BASE_URL}/appointments`,
-    deleteAppointmentsByWeekViewIdAndUserName: `${API_BASE_URL}/appointments/week_view/{weekViewId}?staffName={staffName}`
+    deleteAppointmentsByWeekViewIdAndUserName: `${API_BASE_URL}/appointments/week_view/{weekViewId}?staffName={staffName}`,
+    deleteUser: `${API_BASE_URL}/user?staffName={staffName}`
 };

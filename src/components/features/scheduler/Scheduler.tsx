@@ -114,6 +114,9 @@ const StaffScheduler = () => {
     };
 
     const handleCardDelete = (staff: StaffCardContent) => {
+        // API call
+        UserApiService.deleteStaff(staff.name);
+
         removeFromAssignedStaff(staff);
         removeFromNotAssignedStaff(staff);
     };

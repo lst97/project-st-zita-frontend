@@ -121,6 +121,17 @@ export class UserApiService {
         }
     }
 
+    static async deleteStaff(staffName: string) {
+        try {
+            const url = formatUrl(API_ENDPOINTS.deleteUser, {
+                staffName: staffName
+            });
+            await apiService.delete(url);
+        } catch (error) {
+            throw error;
+        }
+    }
+
     static async createAppointmentsData(
         staffName: string,
         weekViewId: string,
