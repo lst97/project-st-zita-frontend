@@ -7,6 +7,23 @@ function _calculateTimeInMinutes(date: Date): number {
 
 const APPOINTMENT_LENGTH = 30; // Each time-slot is 30 minutes
 
+export function calculateDateGroupTotalHours(dateGroups: Date[][]) {
+    let totalMinutes = 0;
+
+    for (const dateGroup of dateGroups) {
+        // Add 30 minutes for each date in the group
+        totalMinutes += dateGroup.length * APPOINTMENT_LENGTH;
+    }
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    // Format the total hours and minutes into "HH:MM"
+    const totalHours = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+    return totalHours;
+}
+
 export function parseAndSortDate(dateStrings: string[]) {
     const dates = dateStrings.map((dateStr) => new Date(dateStr));
     dates.sort((a, b) => a.getTime() - b.getTime());

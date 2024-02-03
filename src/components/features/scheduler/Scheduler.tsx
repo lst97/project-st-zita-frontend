@@ -17,6 +17,10 @@ import { UserData } from '../../../models/share/UserData';
 import { UserApiService } from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
 import DataSendingIndicator from '../../common/indicators/DataSendingIndicator';
+import {
+    calculateDateGroupTotalHours,
+    groupContinuesTime
+} from '../../../utils/SchedulerHelpers';
 
 const StaffScheduler = () => {
     const [userDataList, setUserDataList] = useState<UserData[]>([]);
@@ -282,7 +286,15 @@ const StaffScheduler = () => {
 
                             const scheduleValue = selectedScheduleMap[username];
 
-                            // Only render StaffCard if staff data is found
+                            let dates = new Array<Date>();
+                            for (const date of scheduleValue.schedule) {
+                                dates.push(new Date(date));
+                            }
+
+                            let totalHours = calculateDateGroupTotalHours(
+                                groupContinuesTime(dates)
+                            );
+
                             return staff &&
                                 scheduleValue.schedule.length > 0 ? (
                                 <StaffCard
@@ -291,7 +303,7 @@ const StaffScheduler = () => {
                                     data={
                                         new StaffCardContent(
                                             staff.username,
-                                            '00:00',
+                                            totalHours,
                                             staff.color,
                                             staff.image,
                                             staff.phoneNumber
