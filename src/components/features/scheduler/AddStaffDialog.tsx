@@ -6,7 +6,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import { UserData } from '../../../models/share/UserData';
+import { StaffData } from '../../../models/share/StaffData';
 import { v4 as uuidv4 } from 'uuid';
 import Grid from '@mui/material/Unstable_Grid2';
 import { StyledAvatar } from '../../common/cards/cards.style';
@@ -24,17 +24,19 @@ const AddStaffDialog = ({
 }: {
     open: boolean;
     onClose: () => void;
-    onAddStaff: (userData: UserData) => void;
+    onAddStaff: (staffData: StaffData) => void;
 }) => {
     const [staffName, setStaffName] = useState('');
     const [staffDescription, setStaffDescription] = useState('');
-    const [representColor, setRepresentColor] = useState('#0055AA');
+    const [representColor, setRepresentColor] = useState(
+        ColorUtils.generateRandomColor()
+    );
     const [email, setEmail] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [snackbarOpen, setSnackbarOpen] = React.useState(false);
     const [dialogBoxMessage, setDialogBoxMessage] = React.useState('');
 
-    const handleSnackbarClose = (event: any, reason: string) => {
+    const handleSnackbarClose = (_event: any, reason: string) => {
         if (reason === 'clickaway') {
             return;
         }
@@ -55,9 +57,9 @@ const AddStaffDialog = ({
 
         ColorUtils.setColorFor(staffName, representColor);
 
-        const newStaff: UserData = {
+        const newStaff: StaffData = {
             id: uuidv4(),
-            username: staffName,
+            staffName: staffName,
             email: email,
             color: representColor,
             phoneNumber: phoneNumber,

@@ -30,7 +30,7 @@ export class ColorUtils {
         this.colorMap.clear();
     }
 
-    private static generateRandomColor(): string {
+    static generateRandomColor(): string {
         let color = '#';
         for (let i = 0; i < 6; i++) {
             color += Math.floor(Math.random() * 16).toString(16);
@@ -38,27 +38,21 @@ export class ColorUtils {
         return color;
     }
 
-    static generateUserColors(users: string[]): void {
-        users.forEach((user) => {
-            this.colorMap.set(user, this.generateRandomColor());
-        });
-    }
-
-    static getColorFor(user: string): string {
-        if (this.colorMap.has(user)) {
-            const color = this.colorMap.get(user);
+    static getColorFor(staff: string): string {
+        if (this.colorMap.has(staff)) {
+            const color = this.colorMap.get(staff);
             if (color) {
                 return color;
             }
         }
 
-        const newColor = this.generateRandomColor();
-        this.colorMap.set(user, newColor);
+        const newColor = ColorUtils.generateRandomColor();
+        this.colorMap.set(staff, newColor);
 
         return newColor;
     }
 
-    static setColorFor(user: string, color: string): void {
-        this.colorMap.set(user, color);
+    static setColorFor(staff: string, color: string): void {
+        this.colorMap.set(staff, color);
     }
 }

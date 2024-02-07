@@ -1,5 +1,5 @@
-export class UserData {
-    username: string;
+export class StaffData {
+    staffName: string;
     email: string;
     image?: string;
     color: string;
@@ -7,14 +7,14 @@ export class UserData {
     id?: string;
 
     constructor(
-        username: string,
+        staffName: string,
         email: string,
         color: string,
         image?: string,
         phoneNumber?: string,
         id?: string
     ) {
-        this.username = username;
+        this.staffName = staffName;
         this.email = email;
         this.color = color;
         if (image) {

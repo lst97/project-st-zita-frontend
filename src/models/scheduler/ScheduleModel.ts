@@ -1,7 +1,6 @@
 export class SelectedSchedule {
     year: number;
     week: number;
-    // Sun Jan 28 2024 12:00:00 GMT+1100 (Australian Eastern Daylight Time)
     schedule: Date[];
     constructor(year: number, week: number, schedule: Date[]) {
         this.year = year;
@@ -11,7 +10,7 @@ export class SelectedSchedule {
 }
 
 export type StaffScheduleMap = {
-    [username: string]: SelectedSchedule;
+    [staffName: string]: SelectedSchedule;
 };
 
 export class DateDuration {

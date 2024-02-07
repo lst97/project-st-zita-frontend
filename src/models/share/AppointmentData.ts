@@ -1,5 +1,5 @@
 export class AppointmentData {
-    username: string;
+    title: string;
     groupId: string;
     weekViewId: string;
     location: string;
@@ -7,14 +7,14 @@ export class AppointmentData {
     endDate: string;
 
     constructor(
-        username: string,
+        title: string,
         groupId: string,
         weekViewId: string,
         location: string,
         startDate: string,
         endDate: string
     ) {
-        this.username = username;
+        this.title = title;
         this.groupId = groupId;
         this.weekViewId = weekViewId;
         this.location = location;

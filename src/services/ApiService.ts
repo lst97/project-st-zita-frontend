@@ -2,7 +2,7 @@ import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
 import { formatUrl } from '../utils/FormatterUtils';
 import { AppointmentData } from '../models/share/AppointmentData';
-import { UserData } from '../models/share/UserData';
+import { StaffData } from '../models/share/StaffData';
 import moment from 'moment-timezone';
 
 import { SelectedSchedule } from '../models/scheduler/ScheduleModel';
@@ -60,16 +60,38 @@ class ApiService {
 
 const apiService = new ApiService();
 
-export class UserApiService {
-    static async fetchUserData() {
+export class StaffApiService {
+    static async fetchStaffData() {
         try {
-            const response = await apiService.get(API_ENDPOINTS.fetchUsersData);
-            return response.data as UserData[];
+            const response = await apiService.get(
+                API_ENDPOINTS.fetchStaffsData
+            );
+            return response.data as StaffData[];
         } catch (error) {
             throw error;
         }
     }
 
+    static async createStaff(staff: StaffData) {
+        try {
+            await apiService.post(API_ENDPOINTS.createStaff, staff);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async deleteStaff(staffName: string) {
+        try {
+            const url = formatUrl(API_ENDPOINTS.deleteStaff, {
+                staffName: staffName
+            });
+            await apiService.delete(url);
+        } catch (error) {
+            throw error;
+        }
+    }
+}
+export class AppointmentApiService {
     static async fetchAppointmentsWeekViewData(
         id: string
     ): Promise<AppointmentData[]> {
@@ -91,7 +113,7 @@ export class UserApiService {
     ) {
         try {
             const url = formatUrl(
-                API_ENDPOINTS.deleteAppointmentsByWeekViewIdAndUserName,
+                API_ENDPOINTS.deleteAppointmentsByWeekViewIdAndStaffName,
                 {
                     weekViewId: weekViewId,
                     staffName: staffName
@@ -100,30 +122,11 @@ export class UserApiService {
 
             await apiService.delete(url);
 
-            this.createAppointmentsData(
+            AppointmentApiService.createAppointmentsData(
                 staffName,
                 weekViewId,
                 selectedSchedule
             );
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    static async createStaff(staff: UserData) {
-        try {
-            await apiService.post(API_ENDPOINTS.createUser, staff);
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    static async deleteStaff(staffName: string) {
-        try {
-            const url = formatUrl(API_ENDPOINTS.deleteUser, {
-                staffName: staffName
-            });
-            await apiService.delete(url);
         } catch (error) {
             throw error;
         }
