@@ -96,7 +96,10 @@ const AddStaffDialog = ({
                             >
                                 {staffName[0] ?? 'CL'}
                             </StyledAvatar>
-                            <ColorPicker onChange={setRepresentColor} />
+                            <ColorPicker
+                                onChange={setRepresentColor}
+                                initialColor={representColor}
+                            />
                         </Box>
                     </Grid>
                     <Grid xs={8}>
