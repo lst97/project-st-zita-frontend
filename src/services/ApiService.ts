@@ -7,10 +7,7 @@ import moment from 'moment-timezone';
 
 import { SelectedSchedule } from '../models/scheduler/ScheduleModel';
 import { v4 as uuidv4 } from 'uuid';
-import {
-    parseAndSortDate,
-    groupContinuesTime
-} from '../utils/SchedulerHelpers';
+import { sortDates, groupContinuesTime } from '../utils/SchedulerHelpers';
 class ApiService {
     private _axiosInstance;
 
@@ -137,12 +134,12 @@ export class UserApiService {
         weekViewId: string,
         selectedSchedule: SelectedSchedule
     ) {
-        const appointmentsData = new Array<AppointmentData>();
+        const appointmentsData = [];
         if (selectedSchedule.schedule.length === 0) {
             return;
         }
 
-        let sortedDateString = parseAndSortDate(selectedSchedule.schedule);
+        let sortedDateString = sortDates(selectedSchedule.schedule);
         let groupedDates = groupContinuesTime(sortedDateString);
 
         for (const group of groupedDates) {

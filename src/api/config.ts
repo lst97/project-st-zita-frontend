@@ -1,6 +1,6 @@
 export const API_VERSION = 'v1';
 export const PORT = 1168;
-export const HOST = '143.198.219.199';
+export const HOST = '127.0.0.1';
 export const API_ENDPOINT = `/api/${API_VERSION}`;
 export const API_BASE_URL = `http://${HOST}:${PORT}${API_ENDPOINT}`;
 

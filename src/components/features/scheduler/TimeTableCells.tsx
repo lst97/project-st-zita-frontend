@@ -1,3 +1,4 @@
+import { isDateIncluded } from '../../../utils/SchedulerHelpers';
 import { StyledTimeTableCell } from './scheduler.style';
 
 const CustomTimeTableCell = ({
@@ -6,7 +7,7 @@ const CustomTimeTableCell = ({
     onCellMouseUp,
     isDisabled,
     selectedCells,
-    startDate,
+    currentCellDate,
     ...restProps
 }: {
     onCellEnter: (date: Date) => void;
@@ -16,18 +17,20 @@ const CustomTimeTableCell = ({
         event: React.MouseEvent<HTMLDivElement>,
         date: Date
     ) => void;
-    selectedCells: string[];
-    startDate: Date;
+    selectedCells: Date[];
+    currentCellDate: Date;
 }) => {
-    const isSelected = selectedCells.includes(startDate.toString());
+    const isSelected = isDateIncluded(selectedCells, currentCellDate);
 
     return (
         <StyledTimeTableCell
             {...restProps}
             selected={isSelected}
             disabled={isDisabled}
-            onMouseEnter={() => onCellEnter(startDate)}
-            onMouseDown={(event: any) => onCellMouseDown(event, startDate)}
+            onMouseEnter={() => onCellEnter(currentCellDate)}
+            onMouseDown={(event: any) =>
+                onCellMouseDown(event, currentCellDate)
+            }
             onMouseUp={onCellMouseUp}
         />
     );

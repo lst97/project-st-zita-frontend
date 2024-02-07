@@ -19,13 +19,15 @@ export class ColorUtils {
                 return '#FFC0CB';
             case 'brown':
                 return '#A52A2A';
-            case 'black':
-                return '#000000';
             case 'white':
                 return '#FFFFFF';
             default:
                 return '#000000';
         }
+    }
+
+    static clearColorMap(): void {
+        this.colorMap.clear();
     }
 
     private static generateRandomColor(): string {

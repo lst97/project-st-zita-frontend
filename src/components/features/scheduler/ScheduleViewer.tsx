@@ -20,7 +20,7 @@ import {
 import {
     dateGroupToAppointments,
     groupContinuesTime,
-    parseAndSortDate
+    sortDates
 } from '../../../utils/SchedulerHelpers';
 
 const handleDeleteAppointment = () => {
@@ -40,17 +40,14 @@ const ScheduleViewer = ({
     currentViewName: string;
     onCurrentViewNameChange: (viewName: string) => void;
 }) => {
-    let appointments = new Map<string, StaffAppointment[]>();
+    const appointments = new Map<string, StaffAppointment[]>();
 
     Object.entries(data).forEach(([staffName, selectedSchedule]) => {
-        if (
-            selectedSchedule == null ||
-            selectedSchedule.schedule == null ||
-            selectedSchedule.schedule.length === 0
-        ) {
+        if ((selectedSchedule?.schedule?.length ?? 0) === 0) {
             return;
         }
-        let sortedDateString = parseAndSortDate(selectedSchedule.schedule);
+
+        let sortedDateString = sortDates(selectedSchedule.schedule);
         let groupedDates = groupContinuesTime(sortedDateString);
         appointments.set(
             staffName,
