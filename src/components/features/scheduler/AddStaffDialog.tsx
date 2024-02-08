@@ -6,7 +6,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import { StaffData } from '../../../models/share/StaffData';
+import StaffData from '../../../models/share/scheduler/StaffData';
 import { v4 as uuidv4 } from 'uuid';
 import Grid from '@mui/material/Unstable_Grid2';
 import { StyledAvatar } from '../../common/cards/cards.style';
@@ -59,7 +59,7 @@ const AddStaffDialog = ({
 
         const newStaff: StaffData = {
             id: uuidv4(),
-            staffName: staffName,
+            name: staffName,
             email: email,
             color: representColor,
             phoneNumber: phoneNumber,

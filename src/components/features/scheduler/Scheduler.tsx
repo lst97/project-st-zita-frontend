@@ -12,7 +12,7 @@ import {
     StaffScheduleMap
 } from '../../../models/scheduler/ScheduleModel';
 import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
-import { StaffData } from '../../../models/share/StaffData';
+import StaffData from '../../../models/share/scheduler/StaffData';
 import {
     StaffApiService,
     AppointmentApiService
@@ -24,7 +24,7 @@ import {
     calculateWeekViewId,
     groupContinuesTime
 } from '../../../utils/SchedulerHelpers';
-import { AppointmentData } from '../../../models/share/AppointmentData';
+import { AppointmentData } from '../../../models/share/scheduler/StaffAppointmentData';
 import React from 'react';
 
 const StaffScheduler = () => {
@@ -88,7 +88,7 @@ const StaffScheduler = () => {
 
         setStaffDataList((prevStaffDataList) =>
             prevStaffDataList.filter(
-                (staffData) => staffData.staffName !== staffCardContent.name
+                (staffData) => staffData.name !== staffCardContent.name
             )
         );
 
@@ -112,7 +112,7 @@ const StaffScheduler = () => {
         }
 
         const staff = staffDataList.find(
-            (staff) => staff.staffName === selectedStaff
+            (staff) => staff.name === selectedStaff
         );
         if (!staff) {
             throw new Error(`Staff ${selectedStaff} not found`);
@@ -163,7 +163,7 @@ const StaffScheduler = () => {
         const newSelectedScheduleMap: StaffScheduleMap = {};
 
         appointmentsData.forEach((appointment) => {
-            const staffName = appointment.title;
+            const staffName = appointment.staffName;
 
             if (!newSelectedScheduleMap[staffName]) {
                 newSelectedScheduleMap[staffName] = new SelectedSchedule(
@@ -211,7 +211,7 @@ const StaffScheduler = () => {
     const mapStaffColor = (staffs: StaffData[]) => {
         ColorUtils.clearColorMap();
         for (const staff of staffs) {
-            ColorUtils.setColorFor(staff.staffName, staff.color);
+            ColorUtils.setColorFor(staff.name, staff.color);
         }
     };
     const fetchStaffData = async () => {
@@ -260,7 +260,7 @@ const StaffScheduler = () => {
                     <StaffAccordion title="Assigned">
                         {Object.keys(selectedScheduleMap).map((staffName) => {
                             const staff = staffDataList.find(
-                                (staff) => staff.staffName === staffName
+                                (staff) => staff.name === staffName
                             );
 
                             const scheduleValue =
@@ -277,11 +277,11 @@ const StaffScheduler = () => {
                             return staff &&
                                 scheduleValue.schedule.length > 0 ? (
                                 <StaffCard
-                                    key={`staff-card-${staff.staffName}`}
+                                    key={`staff-card-${staff.name}`}
                                     onDelete={handleStaffCardDelete}
                                     data={
                                         new StaffCardContent(
-                                            staff.staffName,
+                                            staff.name,
                                             totalHours,
                                             staff.color,
                                             staff.image,
@@ -289,11 +289,9 @@ const StaffScheduler = () => {
                                         )
                                     }
                                     onClick={() =>
-                                        handleStaffCardClick(staff.staffName)
+                                        handleStaffCardClick(staff.name)
                                     }
-                                    isSelected={
-                                        selectedStaff === staff.staffName
-                                    }
+                                    isSelected={selectedStaff === staff.name}
                                 />
                             ) : null; // If no matching staff data is found, render nothing
                         })}
@@ -304,17 +302,17 @@ const StaffScheduler = () => {
                             .filter(
                                 (staff) =>
                                     !(
-                                        selectedScheduleMap[staff.staffName]
+                                        selectedScheduleMap[staff.name]
                                             ?.schedule.length > 0
                                     )
                             )
                             .map((staff) => (
                                 <StaffCard
-                                    key={staff.staffName}
+                                    key={staff.name}
                                     onDelete={handleStaffCardDelete}
                                     data={
                                         new StaffCardContent(
-                                            staff.staffName,
+                                            staff.name,
                                             '00:00',
                                             staff.color,
                                             staff.image,
@@ -322,11 +320,9 @@ const StaffScheduler = () => {
                                         )
                                     }
                                     onClick={() =>
-                                        handleStaffCardClick(staff.staffName)
+                                        handleStaffCardClick(staff.name)
                                     }
-                                    isSelected={
-                                        selectedStaff === staff.staffName
-                                    }
+                                    isSelected={selectedStaff === staff.name}
                                 />
                             ))}
                     </StaffAccordion>

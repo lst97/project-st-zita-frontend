@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
 import { formatUrl } from '../utils/FormatterUtils';
-import { AppointmentData } from '../models/share/AppointmentData';
-import { StaffData } from '../models/share/StaffData';
+import { AppointmentData } from '../models/share/scheduler/StaffAppointmentData';
+import StaffData from '../models/share/scheduler/StaffData';
 import moment from 'moment-timezone';
 
 import { SelectedSchedule } from '../models/scheduler/ScheduleModel';
@@ -146,16 +146,13 @@ export class AppointmentApiService {
         let groupedDates = groupContinuesTime(sortedDateString);
 
         for (const group of groupedDates) {
-            const appointmentData = new AppointmentData(
-                staffName,
-                uuidv4(),
-                weekViewId,
-                '',
-                moment(group[0]).tz('Australia/Melbourne').format(),
-                moment(group[group.length - 1])
-                    .tz('Australia/Melbourne')
-                    .format()
-            );
+            const appointmentData = new AppointmentData({
+                staffName: staffName,
+                groupId: uuidv4(),
+                weekViewId: weekViewId,
+                startDate: group[0].toISOString(),
+                endDate: group[group.length - 1].toISOString()
+            });
             appointmentsData.push(appointmentData);
         }
 
