@@ -1,13 +1,13 @@
 import apiService from '../../../services/ApiService';
+import { AccessTokenService } from '../../../services/TokenService';
 
 export function useJwtInterceptor() {
     apiService.AxiosInstance.interceptors.request.use(
         (config) => {
-            localStorage.setItem('token', '__RESERVED__');
+            const accessToken = AccessTokenService.getToken();
 
-            const token = localStorage.getItem('token');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
+            if (accessToken) {
+                config.headers.Authorization = `Bearer ${accessToken}`;
             }
             return config;
         },

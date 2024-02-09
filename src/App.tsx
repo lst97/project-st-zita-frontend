@@ -1,13 +1,17 @@
+import { BrowserRouter } from 'react-router-dom';
 import { useJwtInterceptor } from './api/interceptors/request/JwtInterceptor';
-import HomePage from './pages/HomePage/HomePage';
+import { AuthProvider } from './context/AuthContext';
+import Routes from './pages/Routes';
 
-function App() {
+const App: React.FC = () => {
     useJwtInterceptor();
     return (
-        <div>
-            <HomePage></HomePage>
-        </div>
+        <BrowserRouter>
+            <AuthProvider>
+                <Routes />
+            </AuthProvider>
+        </BrowserRouter>
     );
-}
+};
 
 export default App;

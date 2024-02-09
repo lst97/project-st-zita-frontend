@@ -8,6 +8,8 @@ import moment from 'moment-timezone';
 import { SelectedSchedule } from '../models/scheduler/ScheduleModel';
 import { v4 as uuidv4 } from 'uuid';
 import { sortDates, groupContinuesTime } from '../utils/SchedulerHelpers';
+import { CreateStaffForm } from '../models/forms/scheduler/CreateStaffForm';
+import { SignInForm } from '../models/forms/auth/SignInForm';
 class ApiService {
     private _axiosInstance;
 
@@ -73,8 +75,15 @@ export class StaffApiService {
     }
 
     static async createStaff(staff: StaffData) {
+        const createStaffForm = new CreateStaffForm({
+            staffName: staff.name,
+            email: staff.email,
+            color: staff.color,
+            phoneNumber: staff.phoneNumber
+        });
+
         try {
-            await apiService.post(API_ENDPOINTS.createStaff, staff);
+            await apiService.post(API_ENDPOINTS.createStaff, createStaffForm);
         } catch (error) {
             throw error;
         }
@@ -161,6 +170,25 @@ export class AppointmentApiService {
                 API_ENDPOINTS.createAppointments,
                 appointmentsData
             );
+        } catch (error) {
+            throw error;
+        }
+    }
+}
+
+export class AuthApiService {
+    static async signIn(email: string, password: string) {
+        const signInForm = new SignInForm({
+            email: email,
+            password: password
+        });
+
+        try {
+            const response = await apiService.post(
+                API_ENDPOINTS.signIn,
+                signInForm
+            );
+            return response.data;
         } catch (error) {
             throw error;
         }
