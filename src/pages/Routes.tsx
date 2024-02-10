@@ -1,8 +1,7 @@
 import { Routes as Router, Route, Navigate, Outlet } from 'react-router-dom';
 import SignInSide from './SignInPage/SignInPage';
 import HomePage from './HomePage/HomePage';
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { AccessTokenService } from '../services/TokenService';
 
 type Props = {};
 
@@ -14,9 +13,8 @@ interface RouteObject {
 }
 
 const PrivateRoutes = () => {
-    const { auth } = useContext(AuthContext);
-
-    if (!auth) return <Navigate to="/signin" replace />;
+    if (!AccessTokenService.getToken())
+        return <Navigate to="/signin" replace />;
 
     return <Outlet />;
 };

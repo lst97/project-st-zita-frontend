@@ -1,5 +1,5 @@
 import React, { ReactElement, createContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { AccessTokenService } from '../services/TokenService';
 
 type Props = {
     children?: React.ReactNode;
@@ -11,7 +11,7 @@ type IAuthContext = {
 };
 
 const initialAuthContext: IAuthContext = {
-    auth: false,
+    auth: !AccessTokenService.getToken(),
     setAuth: () => {}
 };
 
@@ -19,8 +19,6 @@ const AuthContext = createContext<IAuthContext>(initialAuthContext);
 
 const AuthProvider = ({ children }: Props): ReactElement => {
     const [auth, setAuth] = useState(initialAuthContext.auth);
-
-    const navigate = useNavigate();
 
     return (
         <AuthContext.Provider value={{ auth, setAuth }}>

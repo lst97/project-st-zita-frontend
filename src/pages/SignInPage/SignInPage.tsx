@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Copyright from '../../components/common/footers/Copyright';
 import { useNavigate } from 'react-router-dom';
-import { useContext, useEffect } from 'react';
+import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { AuthApiService } from '../../services/ApiService';
 import { AccessTokenService } from '../../services/TokenService';
@@ -43,14 +43,6 @@ export default function SignInSide() {
         AccessTokenService.setToken(jwtToken);
         navigate('/');
     };
-
-    useEffect(() => {
-        if (AccessTokenService.getToken()) {
-            setAuth(true);
-            navigate('/');
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     return (
         <ThemeProvider theme={defaultTheme}>

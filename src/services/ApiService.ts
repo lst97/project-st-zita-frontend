@@ -1,15 +1,73 @@
-import axios from 'axios';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
+import axios, { AxiosResponse } from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
 import { formatUrl } from '../utils/FormatterUtils';
 import { AppointmentData } from '../models/share/scheduler/StaffAppointmentData';
 import StaffData from '../models/share/scheduler/StaffData';
-import moment from 'moment-timezone';
 
 import { SelectedSchedule } from '../models/scheduler/ScheduleModel';
 import { v4 as uuidv4 } from 'uuid';
 import { sortDates, groupContinuesTime } from '../utils/SchedulerHelpers';
 import { CreateStaffForm } from '../models/forms/scheduler/CreateStaffForm';
 import { SignInForm } from '../models/forms/auth/SignInForm';
+import { AccessTokenService } from './TokenService';
+
+export class ApiAuthenticationErrorHandler {
+    private navigate?: NavigateFunction;
+
+    public handleError(error: any): void {
+        if (error.response) {
+            this.handleServerError(error.response);
+        }
+    }
+
+    public useNavigate(navigate: NavigateFunction) {
+        this.navigate = navigate;
+    }
+
+    private handleServerError(response: AxiosResponse) {
+        switch (response.status) {
+            case 401:
+            case 403:
+                AccessTokenService.removeToken();
+                if (this.navigate) {
+                    this.navigate('/signin', { replace: true });
+                }
+                break;
+        }
+    }
+}
+interface IApiErrorHandler {
+    handleError(error: any): void;
+}
+class ApiErrorHandler implements IApiErrorHandler {
+    public handleError(error: any): void {
+        // Centralized logic for handling all API errors
+        if (error.response) {
+            // The request was made and the server responded with a status code outside of the 2xx range
+            this.handleServerError(error.response);
+        } else if (error.request) {
+            // The request was made but no response was received. Network issue, timeout, etc.
+            console.error('Network Error:', error.request);
+            // You might want to display a generic network error message to the user
+        } else {
+            // Something happened in setting up the request
+            console.error('Unexpected API Error:', error.message);
+        }
+    }
+
+    private handleServerError(response: AxiosResponse) {
+        switch (response.status) {
+            case 400:
+                console.error('Bad Request:', response.data);
+                // Handle specific 400 errors with user-friendly messages
+                break;
+            // ... other cases
+            default:
+                console.error('Generic Server Error:', response.data);
+        }
+    }
+}
 class ApiService {
     private _axiosInstance;
 
@@ -61,20 +119,26 @@ class ApiService {
 }
 
 const apiService = new ApiService();
+const apiErrorHandler = new ApiErrorHandler();
 
 export class StaffApiService {
-    static async fetchStaffData() {
+    static async fetchStaffData(errorHandler?: IApiErrorHandler) {
         try {
             const response = await apiService.get(
                 API_ENDPOINTS.fetchStaffsData
             );
             return response.data as StaffData[];
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return [];
         }
     }
 
-    static async createStaff(staff: StaffData) {
+    static async createStaff(
+        staff: StaffData,
+        errorHandler?: IApiErrorHandler
+    ) {
         const createStaffForm = new CreateStaffForm({
             staffName: staff.name,
             email: staff.email,
@@ -85,24 +149,33 @@ export class StaffApiService {
         try {
             await apiService.post(API_ENDPOINTS.createStaff, createStaffForm);
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return null;
         }
     }
 
-    static async deleteStaff(staffName: string) {
+    static async deleteStaff(
+        staffName: string,
+        errorHandler?: IApiErrorHandler
+    ) {
         try {
             const url = formatUrl(API_ENDPOINTS.deleteStaff, {
                 staffName: staffName
             });
             await apiService.delete(url);
+            return true;
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return false;
         }
     }
 }
 export class AppointmentApiService {
     static async fetchAppointmentsWeekViewData(
-        id: string
+        id: string,
+        errorHandler?: IApiErrorHandler
     ): Promise<AppointmentData[]> {
         try {
             const url = formatUrl(API_ENDPOINTS.fetchAppointmentsData, {
@@ -111,14 +184,17 @@ export class AppointmentApiService {
             const response = await apiService.get(url);
             return response.data as AppointmentData[];
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return [];
         }
     }
 
     static async replaceAppointmentsData(
         staffName: string,
         weekViewId: string,
-        selectedSchedule: SelectedSchedule
+        selectedSchedule: SelectedSchedule,
+        errorHandler?: IApiErrorHandler
     ) {
         try {
             const url = formatUrl(
@@ -137,14 +213,17 @@ export class AppointmentApiService {
                 selectedSchedule
             );
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return false;
         }
     }
 
     static async createAppointmentsData(
         staffName: string,
         weekViewId: string,
-        selectedSchedule: SelectedSchedule
+        selectedSchedule: SelectedSchedule,
+        errorHandler?: IApiErrorHandler
     ) {
         const appointmentsData = [];
         if (selectedSchedule.schedule.length === 0) {
@@ -170,8 +249,12 @@ export class AppointmentApiService {
                 API_ENDPOINTS.createAppointments,
                 appointmentsData
             );
+
+            return true;
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return false;
         }
     }
 }
@@ -190,7 +273,8 @@ export class AuthApiService {
             );
             return response.data;
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            return null;
         }
     }
 }

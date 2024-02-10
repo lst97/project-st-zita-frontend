@@ -15,7 +15,8 @@ import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
 import StaffData from '../../../models/share/scheduler/StaffData';
 import {
     StaffApiService,
-    AppointmentApiService
+    AppointmentApiService,
+    ApiAuthenticationErrorHandler
 } from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
 import DataSendingIndicator from '../../common/indicators/DataSendingIndicator';
@@ -26,6 +27,7 @@ import {
 } from '../../../utils/SchedulerHelpers';
 import { AppointmentData } from '../../../models/share/scheduler/StaffAppointmentData';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const StaffScheduler = () => {
     const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
@@ -43,6 +45,11 @@ const StaffScheduler = () => {
 
     const [isSuccess, setIsSuccess] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    const navigate = useNavigate();
+
+    const [apiAuthErrorHandler] = useState(new ApiAuthenticationErrorHandler());
+    apiAuthErrorHandler.useNavigate(navigate);
 
     // Function to handle the current date change
     const onCurrentDateChange = (date: Date) => {
@@ -77,14 +84,14 @@ const StaffScheduler = () => {
         ]);
 
         // API call to add new staff
-        StaffApiService.createStaff(newStaff);
+        StaffApiService.createStaff(newStaff, apiAuthErrorHandler);
     };
 
     const handleStaffCardDelete = (staffCardContent: StaffCardContent) => {
         // API call
 
         // TODO:  Asynchronous API Call Handling
-        StaffApiService.deleteStaff(staffCardContent.name);
+        StaffApiService.deleteStaff(staffCardContent.name, apiAuthErrorHandler);
 
         setStaffDataList((prevStaffDataList) =>
             prevStaffDataList.filter(
@@ -124,7 +131,8 @@ const StaffScheduler = () => {
         AppointmentApiService.replaceAppointmentsData(
             selectedStaff,
             weekViewId,
-            selectedSchedule
+            selectedSchedule,
+            apiAuthErrorHandler
         );
 
         setSelectedScheduleMap((prevMap) => ({
@@ -144,7 +152,8 @@ const StaffScheduler = () => {
 
         const appointmentsData =
             await AppointmentApiService.fetchAppointmentsWeekViewData(
-                weekViewId
+                weekViewId,
+                apiAuthErrorHandler
             );
         const newSelectedScheduleMap = updateSelectedScheduleMap(
             appointmentsData,
@@ -215,7 +224,8 @@ const StaffScheduler = () => {
         }
     };
     const fetchStaffData = async () => {
-        const staffs = await StaffApiService.fetchStaffData();
+        const staffs =
+            await StaffApiService.fetchStaffData(apiAuthErrorHandler);
 
         // For Schedule Viewer and StaffCard to get the display color of the staff
         mapStaffColor(staffs);
