@@ -16,6 +16,7 @@ const initialSnackbarContext: SnackbarContextData = {
     isOpen: false,
     message: '',
     severity: 'info',
+    setIsOpen: () => {},
     showSnackbar: () => {}
 };
 

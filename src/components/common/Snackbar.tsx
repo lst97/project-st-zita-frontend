@@ -10,7 +10,7 @@ const Alert = React.forwardRef<HTMLDivElement, any>(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-export const AppSnackbar = () => {
+const AppSnackbar = () => {
     const { isOpen, message, severity, setIsOpen }: SnackbarContextData =
         useContext(SnackbarContext)!;
 
@@ -37,3 +37,5 @@ export const AppSnackbar = () => {
         </Snackbar>
     );
 };
+
+export default AppSnackbar;

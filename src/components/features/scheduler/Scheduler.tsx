@@ -19,7 +19,6 @@ import {
     ApiAuthenticationErrorHandler
 } from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
-import DataSendingIndicator from '../../common/indicators/DataSendingIndicator';
 import {
     calculateDateGroupTotalHours,
     calculateWeekViewId,
@@ -29,6 +28,7 @@ import { AppointmentData } from '../../../models/share/scheduler/StaffAppointmen
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SnackbarContext } from '../../../context/SnackbarContext';
+import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContext';
 
 const StaffScheduler = () => {
     const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
@@ -44,16 +44,16 @@ const StaffScheduler = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [currentViewName, setCurrentViewName] = useState('Week');
 
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-
     const { showSnackbar } = useContext(SnackbarContext)!;
+    const { showIndicator } = useContext(LoadingIndicatorContext)!;
 
     const navigate = useNavigate();
 
     const [apiAuthErrorHandler] = useState(new ApiAuthenticationErrorHandler());
     apiAuthErrorHandler.useNavigate(navigate);
     apiAuthErrorHandler.useSnackbar(showSnackbar);
+    StaffApiService.useIndicator(showIndicator);
+    AppointmentApiService.useIndicator(showIndicator);
 
     // Function to handle the current date change
     const onCurrentDateChange = (date: Date) => {
@@ -258,10 +258,6 @@ const StaffScheduler = () => {
         <Grid container spacing={2}>
             <Grid xs={5}>
                 <React.Fragment>
-                    <DataSendingIndicator
-                        isSuccess={isSuccess}
-                        isLoading={isLoading}
-                    />
                     <SchedulePlaner
                         currentDate={currentDate}
                         currentViewName={currentViewName}
@@ -310,7 +306,6 @@ const StaffScheduler = () => {
                             ) : null; // If no matching staff data is found, render nothing
                         })}
                     </StaffAccordion>
-
                     <StaffAccordion title="Not Assigned">
                         {staffDataList
                             .filter(
@@ -340,7 +335,6 @@ const StaffScheduler = () => {
                                 />
                             ))}
                     </StaffAccordion>
-
                     <Button
                         variant="contained"
                         color="primary"
@@ -352,7 +346,7 @@ const StaffScheduler = () => {
                         open={dialogOpen}
                         onClose={handleAddStaffCloseDialog}
                         onAddStaff={handleAddStaff}
-                    />
+                    />{' '}
                 </React.Fragment>
             </Grid>
             <Grid xs={7}>

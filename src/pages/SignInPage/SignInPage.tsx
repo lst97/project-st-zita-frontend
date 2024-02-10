@@ -18,21 +18,16 @@ import { AuthContext } from '../../context/AuthContext';
 import { AuthApiService } from '../../services/ApiService';
 import { AccessTokenService } from '../../services/TokenService';
 import CircularProgress from '@mui/material/CircularProgress';
-import { colors } from '@mui/material';
-import {
-    SnackbarContext,
-    SnackbarContextData
-} from '../../context/SnackbarContext';
+import { SnackbarContext } from '../../context/SnackbarContext';
 
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
 export default function SignInSide() {
-    const [isSuccess, setIsSuccess] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { showSnackbar } = useContext(SnackbarContext)!;
 
-    const { auth, setAuth } = useContext(AuthContext);
+    const { setAuth } = useContext(AuthContext);
 
     const navigate = useNavigate();
 

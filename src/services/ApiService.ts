@@ -136,12 +136,25 @@ class ApiService {
 const apiService = new ApiService();
 const apiErrorHandler = new ApiErrorHandler();
 
-export class StaffApiService {
+class ApiResultIndicator {
+    public static showIndicator?: (
+        isLoading: boolean,
+        isSuccess: boolean
+    ) => void;
+
+    public static useIndicator(
+        showIndicator: (isLoading: boolean, isSuccess: boolean) => void
+    ) {
+        this.showIndicator = showIndicator;
+    }
+}
+export class StaffApiService extends ApiResultIndicator {
     static async fetchStaffData(errorHandler?: IApiErrorHandler) {
         try {
             const response = await apiService.get(
                 API_ENDPOINTS.fetchStaffsData
             );
+
             return response.data as StaffData[];
         } catch (error) {
             apiErrorHandler.handleError(error);
@@ -162,8 +175,20 @@ export class StaffApiService {
         });
 
         try {
+            if (this.showIndicator) {
+                this.showIndicator(true, false);
+            }
+
             await apiService.post(API_ENDPOINTS.createStaff, createStaffForm);
+
+            if (this.showIndicator) {
+                this.showIndicator(false, true);
+            }
         } catch (error) {
+            if (this.showIndicator) {
+                this.showIndicator(false, false);
+            }
+
             apiErrorHandler.handleError(error);
             errorHandler?.handleError(error);
             return null;
@@ -175,19 +200,32 @@ export class StaffApiService {
         errorHandler?: IApiErrorHandler
     ) {
         try {
+            if (this.showIndicator) {
+                this.showIndicator(true, false);
+            }
+
             const url = formatUrl(API_ENDPOINTS.deleteStaff, {
                 staffName: staffName
             });
             await apiService.delete(url);
+
+            if (this.showIndicator) {
+                this.showIndicator(false, true);
+            }
+
             return true;
         } catch (error) {
+            if (this.showIndicator) {
+                this.showIndicator(false, false);
+            }
+
             apiErrorHandler.handleError(error);
             errorHandler?.handleError(error);
             return false;
         }
     }
 }
-export class AppointmentApiService {
+export class AppointmentApiService extends ApiResultIndicator {
     static async fetchAppointmentsWeekViewData(
         id: string,
         errorHandler?: IApiErrorHandler
@@ -212,6 +250,9 @@ export class AppointmentApiService {
         errorHandler?: IApiErrorHandler
     ) {
         try {
+            if (this.showIndicator) {
+                this.showIndicator(true, false);
+            }
             const url = formatUrl(
                 API_ENDPOINTS.deleteAppointmentsByWeekViewIdAndStaffName,
                 {
@@ -222,12 +263,19 @@ export class AppointmentApiService {
 
             await apiService.delete(url);
 
-            AppointmentApiService.createAppointmentsData(
+            await AppointmentApiService.createAppointmentsData(
                 staffName,
                 weekViewId,
                 selectedSchedule
             );
+
+            if (this.showIndicator) {
+                this.showIndicator(false, true);
+            }
         } catch (error) {
+            if (this.showIndicator) {
+                this.showIndicator(false, false);
+            }
             apiErrorHandler.handleError(error);
             errorHandler?.handleError(error);
             return false;

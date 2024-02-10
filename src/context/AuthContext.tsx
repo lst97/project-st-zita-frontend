@@ -19,7 +19,6 @@ const AuthContext = createContext<IAuthContext>(initialAuthContext);
 
 const AuthProvider = ({ children }: Props): ReactElement => {
     const [auth, setAuth] = useState(initialAuthContext.auth);
-    initialAuthContext.setAuth = setAuth;
 
     return (
         <AuthContext.Provider value={{ auth, setAuth }}>
