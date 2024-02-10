@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import StaffCard from '../../common/cards/Cards';
 import SchedulePlaner from './SchedulePlaner';
 import ScheduleViewer from './ScheduleViewer';
@@ -28,6 +28,7 @@ import {
 import { AppointmentData } from '../../../models/share/scheduler/StaffAppointmentData';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SnackbarContext } from '../../../context/SnackbarContext';
 
 const StaffScheduler = () => {
     const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
@@ -46,10 +47,13 @@ const StaffScheduler = () => {
     const [isSuccess, setIsSuccess] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    const { showSnackbar } = useContext(SnackbarContext)!;
+
     const navigate = useNavigate();
 
     const [apiAuthErrorHandler] = useState(new ApiAuthenticationErrorHandler());
     apiAuthErrorHandler.useNavigate(navigate);
+    apiAuthErrorHandler.useSnackbar(showSnackbar);
 
     // Function to handle the current date change
     const onCurrentDateChange = (date: Date) => {

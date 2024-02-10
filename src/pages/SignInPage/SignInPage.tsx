@@ -13,20 +13,32 @@ import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Copyright from '../../components/common/footers/Copyright';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { AuthApiService } from '../../services/ApiService';
 import { AccessTokenService } from '../../services/TokenService';
+import CircularProgress from '@mui/material/CircularProgress';
+import { colors } from '@mui/material';
+import {
+    SnackbarContext,
+    SnackbarContextData
+} from '../../context/SnackbarContext';
 
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
 export default function SignInSide() {
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const { showSnackbar } = useContext(SnackbarContext)!;
+
     const { auth, setAuth } = useContext(AuthContext);
 
     const navigate = useNavigate();
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        setIsLoading(true);
+
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const jwtToken = await AuthApiService.signIn(
@@ -35,7 +47,8 @@ export default function SignInSide() {
         );
 
         if (!jwtToken) {
-            console.error('Invalid credentials');
+            showSnackbar('Invalid credentials', 'error');
+            setIsLoading(false);
             return;
         }
 
@@ -130,7 +143,14 @@ export default function SignInSide() {
                                 variant="contained"
                                 sx={{ mt: 3, mb: 2 }}
                             >
-                                Sign In
+                                {isLoading ? (
+                                    <CircularProgress
+                                        size={24}
+                                        color="inherit"
+                                    />
+                                ) : (
+                                    'Sign In'
+                                )}
                             </Button>
                             <Grid container>
                                 <Grid item xs>

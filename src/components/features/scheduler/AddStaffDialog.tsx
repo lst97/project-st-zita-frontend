@@ -1,5 +1,5 @@
 // AddStaffDialog.js
-import React, { useState } from 'react';
+import { useContext, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -13,9 +13,10 @@ import { StyledAvatar } from '../../common/cards/cards.style';
 import { ColorUtils } from '../../../utils/ColorUtils';
 import ColorPicker from '../../common/colors/ColorPicker';
 import { Box } from '@mui/material';
-import Snackbar from '@mui/material/Snackbar';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
+import {
+    SnackbarContext,
+    SnackbarContextData
+} from '../../../context/SnackbarContext';
 
 const AddStaffDialog = ({
     open,
@@ -33,16 +34,7 @@ const AddStaffDialog = ({
     );
     const [email, setEmail] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [snackbarOpen, setSnackbarOpen] = React.useState(false);
-    const [dialogBoxMessage, setDialogBoxMessage] = React.useState('');
-
-    const handleSnackbarClose = (_event: any, reason: string) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-
-        setSnackbarOpen(false);
-    };
+    const { showSnackbar }: SnackbarContextData = useContext(SnackbarContext)!;
 
     const validator = (value: string) => {
         return value.length > 0;
@@ -50,8 +42,7 @@ const AddStaffDialog = ({
 
     const handleAddClick = () => {
         if (!validator(staffName)) {
-            setDialogBoxMessage('Staff name is required');
-            setSnackbarOpen(true);
+            showSnackbar('Staff name is required', 'error');
             return;
         }
 
@@ -145,25 +136,6 @@ const AddStaffDialog = ({
                 <Button onClick={handleAddClick} color="primary">
                     Add
                 </Button>
-                <Snackbar
-                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                    open={snackbarOpen}
-                    autoHideDuration={3000}
-                    onClose={handleSnackbarClose}
-                    message={dialogBoxMessage}
-                    action={
-                        <React.Fragment>
-                            <IconButton
-                                size="small"
-                                aria-label="close"
-                                color="inherit"
-                                onClick={setSnackbarOpen.bind(this, false)}
-                            >
-                                <CloseIcon fontSize="small" />
-                            </IconButton>
-                        </React.Fragment>
-                    }
-                />
             </DialogActions>
         </Dialog>
     );

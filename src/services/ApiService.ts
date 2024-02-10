@@ -14,6 +14,7 @@ import { AccessTokenService } from './TokenService';
 
 export class ApiAuthenticationErrorHandler {
     private navigate?: NavigateFunction;
+    private showSnackbar?: (message: string, severity: 'error') => void;
 
     public handleError(error: any): void {
         if (error.response) {
@@ -25,6 +26,12 @@ export class ApiAuthenticationErrorHandler {
         this.navigate = navigate;
     }
 
+    public useSnackbar(
+        showSnackbar: (message: string, severity: 'error') => void
+    ) {
+        this.showSnackbar = showSnackbar;
+    }
+
     private handleServerError(response: AxiosResponse) {
         switch (response.status) {
             case 401:
@@ -33,6 +40,14 @@ export class ApiAuthenticationErrorHandler {
                 if (this.navigate) {
                     this.navigate('/signin', { replace: true });
                 }
+
+                if (this.showSnackbar) {
+                    this.showSnackbar(
+                        'Session expired. Please sign in again',
+                        'error'
+                    );
+                }
+
                 break;
         }
     }
