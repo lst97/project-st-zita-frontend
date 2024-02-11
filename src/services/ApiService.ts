@@ -1,16 +1,88 @@
-import axios from 'axios';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
+import axios, { AxiosResponse } from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
 import { formatUrl } from '../utils/FormatterUtils';
-import { AppointmentData } from '../models/share/AppointmentData';
-import { UserData } from '../models/share/UserData';
-import moment from 'moment-timezone';
+import { AppointmentData } from '../models/share/scheduler/StaffAppointmentData';
+import StaffData from '../models/share/scheduler/StaffData';
 
 import { SelectedSchedule } from '../models/scheduler/ScheduleModel';
 import { v4 as uuidv4 } from 'uuid';
-import {
-    parseAndSortDate,
-    groupContinuesTime
-} from '../utils/SchedulerHelpers';
+import { sortDates, groupContinuesTime } from '../utils/SchedulerHelpers';
+import { CreateStaffForm } from '../models/forms/scheduler/CreateStaffForm';
+import { SignInForm } from '../models/forms/auth/SignInForm';
+import { AccessTokenService } from './TokenService';
+
+export class ApiAuthenticationErrorHandler {
+    private navigate?: NavigateFunction;
+    private showSnackbar?: (message: string, severity: 'error') => void;
+
+    public handleError(error: any): void {
+        if (error.response) {
+            this.handleServerError(error.response);
+        }
+    }
+
+    public useNavigate(navigate: NavigateFunction) {
+        this.navigate = navigate;
+    }
+
+    public useSnackbar(
+        showSnackbar: (message: string, severity: 'error') => void
+    ) {
+        this.showSnackbar = showSnackbar;
+    }
+
+    private handleServerError(response: AxiosResponse) {
+        switch (response.status) {
+            case 401:
+            case 403:
+                AccessTokenService.removeToken();
+                if (this.navigate) {
+                    this.navigate('/signin', { replace: true });
+                }
+
+                if (this.showSnackbar) {
+                    this.showSnackbar(
+                        'Session expired. Please sign in again',
+                        'error'
+                    );
+                }
+
+                break;
+        }
+    }
+}
+interface IApiErrorHandler {
+    handleError(error: any): void;
+}
+class ApiErrorHandler implements IApiErrorHandler {
+    public handleError(error: any): void {
+        // Centralized logic for handling all API errors
+        if (error.response) {
+            // The request was made and the server responded with a status code outside of the 2xx range
+            this.handleServerError(error.response);
+        } else if (error.request) {
+            // The request was made but no response was received. Network issue, timeout, etc.
+            console.error('Network Error:', error.request);
+            // You might want to display a generic network error message to the user
+        } else {
+            // Something happened in setting up the request
+            console.error('Unexpected API Error:', error.message);
+        }
+    }
+
+    private handleServerError(response: AxiosResponse) {
+        switch (response.status) {
+            case 400:
+                console.error('Bad Request:', response.data);
+                // Handle specific 400 errors with user-friendly messages
+                break;
+            // ... other cases
+            default:
+                console.error('Generic Server Error:', response.data);
+        }
+    }
+}
 class ApiService {
     private _axiosInstance;
 
@@ -62,19 +134,101 @@ class ApiService {
 }
 
 const apiService = new ApiService();
+const apiErrorHandler = new ApiErrorHandler();
 
-export class UserApiService {
-    static async fetchUserData() {
+class ApiResultIndicator {
+    public static showIndicator?: (
+        isLoading: boolean,
+        isSuccess: boolean
+    ) => void;
+
+    public static useIndicator(
+        showIndicator: (isLoading: boolean, isSuccess: boolean) => void
+    ) {
+        this.showIndicator = showIndicator;
+    }
+}
+export class StaffApiService extends ApiResultIndicator {
+    static async fetchStaffData(errorHandler?: IApiErrorHandler) {
         try {
-            const response = await apiService.get(API_ENDPOINTS.fetchUsersData);
-            return response.data as UserData[];
+            const response = await apiService.get(
+                API_ENDPOINTS.fetchStaffsData
+            );
+
+            return response.data as StaffData[];
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return [];
         }
     }
 
+    static async createStaff(
+        staff: StaffData,
+        errorHandler?: IApiErrorHandler
+    ) {
+        const createStaffForm = new CreateStaffForm({
+            staffName: staff.name,
+            email: staff.email,
+            color: staff.color,
+            phoneNumber: staff.phoneNumber
+        });
+
+        try {
+            if (this.showIndicator) {
+                this.showIndicator(true, false);
+            }
+
+            await apiService.post(API_ENDPOINTS.createStaff, createStaffForm);
+
+            if (this.showIndicator) {
+                this.showIndicator(false, true);
+            }
+        } catch (error) {
+            if (this.showIndicator) {
+                this.showIndicator(false, false);
+            }
+
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return null;
+        }
+    }
+
+    static async deleteStaff(
+        staffName: string,
+        errorHandler?: IApiErrorHandler
+    ) {
+        try {
+            if (this.showIndicator) {
+                this.showIndicator(true, false);
+            }
+
+            const url = formatUrl(API_ENDPOINTS.deleteStaff, {
+                staffName: staffName
+            });
+            await apiService.delete(url);
+
+            if (this.showIndicator) {
+                this.showIndicator(false, true);
+            }
+
+            return true;
+        } catch (error) {
+            if (this.showIndicator) {
+                this.showIndicator(false, false);
+            }
+
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return false;
+        }
+    }
+}
+export class AppointmentApiService extends ApiResultIndicator {
     static async fetchAppointmentsWeekViewData(
-        id: string
+        id: string,
+        errorHandler?: IApiErrorHandler
     ): Promise<AppointmentData[]> {
         try {
             const url = formatUrl(API_ENDPOINTS.fetchAppointmentsData, {
@@ -83,18 +237,24 @@ export class UserApiService {
             const response = await apiService.get(url);
             return response.data as AppointmentData[];
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return [];
         }
     }
 
     static async replaceAppointmentsData(
         staffName: string,
         weekViewId: string,
-        selectedSchedule: SelectedSchedule
+        selectedSchedule: SelectedSchedule,
+        errorHandler?: IApiErrorHandler
     ) {
         try {
+            if (this.showIndicator) {
+                this.showIndicator(true, false);
+            }
             const url = formatUrl(
-                API_ENDPOINTS.deleteAppointmentsByWeekViewIdAndUserName,
+                API_ENDPOINTS.deleteAppointmentsByWeekViewIdAndStaffName,
                 {
                     weekViewId: weekViewId,
                     staffName: staffName
@@ -103,59 +263,47 @@ export class UserApiService {
 
             await apiService.delete(url);
 
-            this.createAppointmentsData(
+            await AppointmentApiService.createAppointmentsData(
                 staffName,
                 weekViewId,
                 selectedSchedule
             );
-        } catch (error) {
-            throw error;
-        }
-    }
 
-    static async createStaff(staff: UserData) {
-        try {
-            await apiService.post(API_ENDPOINTS.createUser, staff);
+            if (this.showIndicator) {
+                this.showIndicator(false, true);
+            }
         } catch (error) {
-            throw error;
-        }
-    }
-
-    static async deleteStaff(staffName: string) {
-        try {
-            const url = formatUrl(API_ENDPOINTS.deleteUser, {
-                staffName: staffName
-            });
-            await apiService.delete(url);
-        } catch (error) {
-            throw error;
+            if (this.showIndicator) {
+                this.showIndicator(false, false);
+            }
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return false;
         }
     }
 
     static async createAppointmentsData(
         staffName: string,
         weekViewId: string,
-        selectedSchedule: SelectedSchedule
+        selectedSchedule: SelectedSchedule,
+        errorHandler?: IApiErrorHandler
     ) {
-        const appointmentsData = new Array<AppointmentData>();
+        const appointmentsData = [];
         if (selectedSchedule.schedule.length === 0) {
             return;
         }
 
-        let sortedDateString = parseAndSortDate(selectedSchedule.schedule);
+        let sortedDateString = sortDates(selectedSchedule.schedule);
         let groupedDates = groupContinuesTime(sortedDateString);
 
         for (const group of groupedDates) {
-            const appointmentData = new AppointmentData(
-                staffName,
-                uuidv4(),
-                weekViewId,
-                '',
-                moment(group[0]).tz('Australia/Melbourne').format(),
-                moment(group[group.length - 1])
-                    .tz('Australia/Melbourne')
-                    .format()
-            );
+            const appointmentData = new AppointmentData({
+                staffName: staffName,
+                groupId: uuidv4(),
+                weekViewId: weekViewId,
+                startDate: group[0].toISOString(),
+                endDate: group[group.length - 1].toISOString()
+            });
             appointmentsData.push(appointmentData);
         }
 
@@ -164,8 +312,32 @@ export class UserApiService {
                 API_ENDPOINTS.createAppointments,
                 appointmentsData
             );
+
+            return true;
         } catch (error) {
-            throw error;
+            apiErrorHandler.handleError(error);
+            errorHandler?.handleError(error);
+            return false;
+        }
+    }
+}
+
+export class AuthApiService {
+    static async signIn(email: string, password: string) {
+        const signInForm = new SignInForm({
+            email: email,
+            password: password
+        });
+
+        try {
+            const response = await apiService.post(
+                API_ENDPOINTS.signIn,
+                signInForm
+            );
+            return response.data;
+        } catch (error) {
+            apiErrorHandler.handleError(error);
+            return null;
         }
     }
 }

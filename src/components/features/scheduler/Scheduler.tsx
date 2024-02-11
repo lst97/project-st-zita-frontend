@@ -1,4 +1,4 @@
-import { SetStateAction, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import StaffCard from '../../common/cards/Cards';
 import SchedulePlaner from './SchedulePlaner';
 import ScheduleViewer from './ScheduleViewer';
@@ -9,24 +9,32 @@ import AddStaffDialog from './AddStaffDialog';
 import Button from '@mui/material/Button';
 import {
     SelectedSchedule,
-    StaffCardContentMap,
     StaffScheduleMap
 } from '../../../models/scheduler/ScheduleModel';
 import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
-import { UserData } from '../../../models/share/UserData';
-import { UserApiService } from '../../../services/ApiService';
+import StaffData from '../../../models/share/scheduler/StaffData';
+import {
+    StaffApiService,
+    AppointmentApiService,
+    ApiAuthenticationErrorHandler
+} from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
-import DataSendingIndicator from '../../common/indicators/DataSendingIndicator';
 import {
     calculateDateGroupTotalHours,
+    calculateWeekViewId,
     groupContinuesTime
 } from '../../../utils/SchedulerHelpers';
+import { AppointmentData } from '../../../models/share/scheduler/StaffAppointmentData';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { SnackbarContext } from '../../../context/SnackbarContext';
+import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContext';
 
 const StaffScheduler = () => {
-    const [userDataList, setUserDataList] = useState<UserData[]>([]);
+    const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
     const [selectedStaff, setSelectedStaff] = useState<string | null>();
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [selectedPlannerCells, setSelectedPlannerCells] = useState<string[]>(
+    const [selectedPlannerCells, setSelectedPlannerCells] = useState<Date[]>(
         []
     );
 
@@ -36,32 +44,28 @@ const StaffScheduler = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [currentViewName, setCurrentViewName] = useState('Week');
 
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const { showSnackbar } = useContext(SnackbarContext)!;
+    const { showIndicator } = useContext(LoadingIndicatorContext)!;
 
-    const initialKey =
-        getISOWeekNumberFromDate(currentDate).toString() +
-        '-' +
-        currentDate.getFullYear().toString();
-    const [staffCardContentMap, setStaffCardContentMap] =
-        useState<StaffCardContentMap>({
-            [initialKey]: {
-                assigned: [],
-                notAssigned: [],
-                staffScheduleMap: {}
-            }
-        });
+    const navigate = useNavigate();
+
+    const [apiAuthErrorHandler] = useState(new ApiAuthenticationErrorHandler());
+    apiAuthErrorHandler.useNavigate(navigate);
+    apiAuthErrorHandler.useSnackbar(showSnackbar);
+    StaffApiService.useIndicator(showIndicator);
+    AppointmentApiService.useIndicator(showIndicator);
+
     // Function to handle the current date change
     const onCurrentDateChange = (date: Date) => {
         setCurrentDate(date);
     };
 
-    // Function to handle the view name change
+    // for sync currentViewName between SchedulePlaner and ScheduleViewer
     const onCurrentViewNameChange = (viewName: string) => {
         setCurrentViewName(viewName);
     };
 
-    const handleCardClick = (name: string) => {
+    const handleStaffCardClick = (name: string) => {
         if (selectedStaff === name) {
             setSelectedStaff(null);
         } else {
@@ -69,192 +73,182 @@ const StaffScheduler = () => {
         }
     };
 
-    const handleOpenDialog = () => {
+    const handleAddStaffOpenDialog = () => {
         setDialogOpen(true);
     };
 
-    const handleCloseDialog = () => {
+    const handleAddStaffCloseDialog = () => {
         setDialogOpen(false);
     };
 
-    const handleAddStaff = (newStaff: UserData) => {
-        setUserDataList((prevUserDataList) => [...prevUserDataList, newStaff]);
+    const handleAddStaff = (newStaff: StaffData) => {
+        setStaffDataList((prevStaffDataList) => [
+            ...prevStaffDataList,
+            newStaff
+        ]);
 
         // API call to add new staff
-        UserApiService.createStaff(newStaff);
+        StaffApiService.createStaff(newStaff, apiAuthErrorHandler);
     };
 
-    const handleCardDelete = (staff: StaffCardContent) => {
+    const handleStaffCardDelete = (staffCardContent: StaffCardContent) => {
         // API call
 
-        UserApiService.deleteStaff(staff.name);
+        // TODO:  Asynchronous API Call Handling
+        StaffApiService.deleteStaff(staffCardContent.name, apiAuthErrorHandler);
 
-        const newUserDataList = userDataList.filter(
-            (user) => user.username !== staff.name
+        setStaffDataList((prevStaffDataList) =>
+            prevStaffDataList.filter(
+                (staffData) => staffData.name !== staffCardContent.name
+            )
         );
-
-        setUserDataList(newUserDataList);
 
         setSelectedPlannerCells([]);
         setSelectedStaff(null);
 
         setSelectedScheduleMap((prevMap) => {
             // Create a copy of the map/object without the staff member
-            const { [staff.name]: _, ...updatedMap } = prevMap;
+            const { [staffCardContent.name]: _, ...updatedMap } = prevMap;
             return updatedMap;
         });
     };
 
-    const handleSelectionFinish = (selectedSchedule: SelectedSchedule) => {
-        const user = userDataList?.find(
-            (user) => user.username === selectedStaff
+    // Function to handle the finish of the planner cells selection
+    // The function will be called when the mouse is released after selecting the cells
+    const handlePlannerCellsSelectionFinish = (
+        selectedSchedule: SelectedSchedule
+    ) => {
+        if (selectedStaff == null) {
+            return;
+        }
+
+        const staff = staffDataList.find(
+            (staff) => staff.name === selectedStaff
+        );
+        if (!staff) {
+            throw new Error(`Staff ${selectedStaff} not found`);
+        }
+
+        const weekViewId = calculateWeekViewId(currentDate);
+
+        // TODO: Asynchronous API Call Handling
+        AppointmentApiService.replaceAppointmentsData(
+            selectedStaff,
+            weekViewId,
+            selectedSchedule,
+            apiAuthErrorHandler
         );
 
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        // API call to remove appointment
-
-        if (selectedStaff) {
-            const weekNumber = getISOWeekNumberFromDate(currentDate).toString();
-            const year = currentDate.getFullYear().toString();
-            const weekViewId = weekNumber + '-' + year;
-
-            UserApiService.replaceAppointmentsData(
-                selectedStaff,
-                weekViewId,
-                selectedSchedule
-            );
-
-            setSelectedScheduleMap((prevMap) => ({
-                ...prevMap,
-                [selectedStaff!]: selectedSchedule ?? []
-            }));
-        }
+        setSelectedScheduleMap((prevMap) => ({
+            ...prevMap,
+            [selectedStaff!]: selectedSchedule ?? []
+        }));
     };
-    // Step 1: fetch user data
-    // Step 2: fetch appointment data base on current scheduler week view (week number, year)
-    // Step 3: put the user to different lists based on their availability for the week
-    // Step 4: map the appointments to the scheduleMap
-    const fetchAppointmentWeekViewData = async () => {
-        const weekNumber = getISOWeekNumberFromDate(currentDate).toString();
-        const year = currentDate.getFullYear().toString();
 
-        const weekViewId = weekNumber + '-' + year;
+    // Step 1: fetch staff data
+    // Step 2: fetch appointment data base on current scheduler week view (week number, year)
+    // Step 3: map the appointments to the scheduleMap
+
+    const fetchAppointmentWeekViewData = async () => {
+        const weekNumber = getISOWeekNumberFromDate(currentDate);
+        const year = currentDate.getFullYear();
+        const weekViewId = calculateWeekViewId(currentDate);
 
         const appointmentsData =
-            await UserApiService.fetchAppointmentsWeekViewData(weekViewId);
-
-        // update selectedScheduleMap form appointmentsData
-        const newSelectedScheduleMap: StaffScheduleMap = {};
-
-        for (const appointment of appointmentsData) {
-            const staffName = appointment.username;
-
-            if (newSelectedScheduleMap[staffName] == null) {
-                newSelectedScheduleMap[staffName] = new SelectedSchedule(
-                    parseInt(year),
-                    parseInt(weekNumber),
-                    []
-                );
-            }
-
-            const startDate = new Date(appointment.startDate);
-            const endDate = new Date(appointment.endDate);
-
-            // Temporary variable to hold the current date being processed
-            let currentDate = new Date(startDate);
-
-            while (currentDate <= endDate) {
-                // Push the current date in ISO format to the schedule array
-                newSelectedScheduleMap[staffName].schedule.push(
-                    currentDate.toISOString()
-                );
-
-                // Increment the current date by 30 minutes
-                currentDate = new Date(currentDate.getTime() + 30 * 60 * 1000); // 30 minutes in milliseconds
-            }
-        }
-
-        let newAssignedList: SetStateAction<StaffCardContent[]>;
-        newAssignedList = [];
-        let newNotAssignedList: SetStateAction<StaffCardContent[]>;
-        newNotAssignedList = [];
-        const newKey = `${weekNumber}-${year}`;
-
-        for (const user of userDataList) {
-            const staffName = user.username;
-            if (newSelectedScheduleMap[staffName] != null) {
-                newAssignedList.push(
-                    new StaffCardContent(
-                        staffName,
-                        'TOTAL_HOUR',
-                        user.color,
-                        user.image
-                    )
-                );
-            } else {
-                newNotAssignedList.push(
-                    new StaffCardContent(
-                        staffName,
-                        'TOTAL_HOUR',
-                        user.color,
-                        user.image
-                    )
-                );
-            }
-        }
-
-        if (selectedStaff != null) {
-            setSelectedPlannerCells(
-                newSelectedScheduleMap[selectedStaff]?.schedule || []
+            await AppointmentApiService.fetchAppointmentsWeekViewData(
+                weekViewId,
+                apiAuthErrorHandler
             );
-        }
-
-        setStaffCardContentMap({
-            ...staffCardContentMap,
-            [newKey]: {
-                assigned: newAssignedList,
-                notAssigned: newNotAssignedList,
-                staffScheduleMap: newSelectedScheduleMap
-            }
-        });
+        const newSelectedScheduleMap = updateSelectedScheduleMap(
+            appointmentsData,
+            year,
+            weekNumber
+        );
 
         setSelectedScheduleMap(newSelectedScheduleMap);
     };
 
+    function updateSelectedScheduleMap(
+        appointmentsData: AppointmentData[],
+        year: number,
+        weekNumber: number
+    ): StaffScheduleMap {
+        const newSelectedScheduleMap: StaffScheduleMap = {};
+
+        appointmentsData.forEach((appointment) => {
+            const staffName = appointment.staffName;
+
+            if (!newSelectedScheduleMap[staffName]) {
+                newSelectedScheduleMap[staffName] = new SelectedSchedule(
+                    year,
+                    weekNumber,
+                    []
+                );
+            }
+
+            populateScheduleForStaff(
+                newSelectedScheduleMap[staffName].schedule,
+                new Date(appointment.startDate),
+                new Date(appointment.endDate)
+            );
+        });
+
+        return newSelectedScheduleMap;
+    }
+
+    function populateScheduleForStaff(
+        schedule: Date[],
+        startDateStr: Date,
+        endDateStr: Date
+    ) {
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+        const THIRTY_MINUTES_IN_MS = 30 * 60 * 1000;
+
+        for (
+            let tempDate = startDate;
+            tempDate <= endDate;
+            tempDate = new Date(tempDate.getTime() + THIRTY_MINUTES_IN_MS)
+        ) {
+            schedule.push(tempDate);
+        }
+    }
+
+    // When user change the week view, fetch the new schedule data
     useEffect(() => {
         fetchAppointmentWeekViewData();
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentDate]);
 
-    const fetchUserData = async () => {
-        const users = await UserApiService.fetchUserData();
-        const newStaffCardList = new Array<StaffCardContent>();
-        for (const user of users) {
-            newStaffCardList.push(
-                new StaffCardContent(
-                    user.username,
-                    'TOTAL_HOUR',
-                    user.color,
-                    user.image
-                )
-            );
-            ColorUtils.setColorFor(user.username, user.color);
+    const mapStaffColor = (staffs: StaffData[]) => {
+        ColorUtils.clearColorMap();
+        for (const staff of staffs) {
+            ColorUtils.setColorFor(staff.name, staff.color);
         }
-        setUserDataList(users);
+    };
+    const fetchStaffData = async () => {
+        const staffs =
+            await StaffApiService.fetchStaffData(apiAuthErrorHandler);
+
+        // For Schedule Viewer and StaffCard to get the display color of the staff
+        mapStaffColor(staffs);
+
+        setStaffDataList(staffs);
     };
 
     useEffect(() => {
-        fetchUserData();
+        fetchStaffData();
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         if (selectedStaff != null) {
             setSelectedPlannerCells(
-                selectedScheduleMap[selectedStaff!]?.schedule || []
+                Array.from(
+                    new Set(selectedScheduleMap[selectedStaff!]?.schedule)
+                ) || []
             );
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,11 +257,7 @@ const StaffScheduler = () => {
     return (
         <Grid container spacing={2}>
             <Grid xs={5}>
-                <div>
-                    <DataSendingIndicator
-                        isSuccess={isSuccess}
-                        isLoading={isLoading}
-                    />
+                <React.Fragment>
                     <SchedulePlaner
                         currentDate={currentDate}
                         currentViewName={currentViewName}
@@ -275,21 +265,20 @@ const StaffScheduler = () => {
                         onCurrentViewNameChange={onCurrentViewNameChange}
                         isEnabled={selectedStaff != null}
                         data={selectedPlannerCells}
-                        onFinish={handleSelectionFinish}
+                        onFinish={handlePlannerCellsSelectionFinish}
                     />
                     <StaffAccordion title="Assigned">
-                        {Object.keys(selectedScheduleMap).map((username) => {
-                            // Find the user data in userDataList that matches the current username
-                            const staff = userDataList.find(
-                                (user) => user.username === username
+                        {Object.keys(selectedScheduleMap).map((staffName) => {
+                            const staff = staffDataList.find(
+                                (staff) => staff.name === staffName
                             );
 
-                            const scheduleValue = selectedScheduleMap[username];
+                            const scheduleValue =
+                                selectedScheduleMap[staffName];
 
-                            let dates = new Array<Date>();
-                            for (const date of scheduleValue.schedule) {
-                                dates.push(new Date(date));
-                            }
+                            let dates = scheduleValue.schedule.map(
+                                (date) => new Date(date)
+                            );
 
                             let totalHours = calculateDateGroupTotalHours(
                                 groupContinuesTime(dates)
@@ -298,11 +287,11 @@ const StaffScheduler = () => {
                             return staff &&
                                 scheduleValue.schedule.length > 0 ? (
                                 <StaffCard
-                                    key={staff.username}
-                                    onDelete={handleCardDelete}
+                                    key={`staff-card-${staff.name}`}
+                                    onDelete={handleStaffCardDelete}
                                     data={
                                         new StaffCardContent(
-                                            staff.username,
+                                            staff.name,
                                             totalHours,
                                             staff.color,
                                             staff.image,
@@ -310,33 +299,29 @@ const StaffScheduler = () => {
                                         )
                                     }
                                     onClick={() =>
-                                        handleCardClick(staff.username)
+                                        handleStaffCardClick(staff.name)
                                     }
-                                    isSelected={
-                                        selectedStaff === staff.username
-                                    }
+                                    isSelected={selectedStaff === staff.name}
                                 />
                             ) : null; // If no matching staff data is found, render nothing
                         })}
                     </StaffAccordion>
-
                     <StaffAccordion title="Not Assigned">
-                        {userDataList
+                        {staffDataList
                             .filter(
                                 (staff) =>
                                     !(
-                                        selectedScheduleMap[staff.username] &&
-                                        selectedScheduleMap[staff.username]
-                                            .schedule.length > 0
+                                        selectedScheduleMap[staff.name]
+                                            ?.schedule.length > 0
                                     )
                             )
                             .map((staff) => (
                                 <StaffCard
-                                    key={staff.username}
-                                    onDelete={handleCardDelete}
+                                    key={staff.name}
+                                    onDelete={handleStaffCardDelete}
                                     data={
                                         new StaffCardContent(
-                                            staff.username,
+                                            staff.name,
                                             '00:00',
                                             staff.color,
                                             staff.image,
@@ -344,28 +329,25 @@ const StaffScheduler = () => {
                                         )
                                     }
                                     onClick={() =>
-                                        handleCardClick(staff.username)
+                                        handleStaffCardClick(staff.name)
                                     }
-                                    isSelected={
-                                        selectedStaff === staff.username
-                                    }
+                                    isSelected={selectedStaff === staff.name}
                                 />
                             ))}
                     </StaffAccordion>
-
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={handleOpenDialog}
+                        onClick={handleAddStaffOpenDialog}
                     >
                         Add Staff
                     </Button>
                     <AddStaffDialog
                         open={dialogOpen}
-                        onClose={handleCloseDialog}
+                        onClose={handleAddStaffCloseDialog}
                         onAddStaff={handleAddStaff}
-                    />
-                </div>
+                    />{' '}
+                </React.Fragment>
             </Grid>
             <Grid xs={7}>
                 <ScheduleViewer

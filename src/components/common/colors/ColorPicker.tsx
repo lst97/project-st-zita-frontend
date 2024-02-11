@@ -1,8 +1,14 @@
 import React from 'react';
 import { MuiColorInput } from 'mui-color-input';
 
-const ColorPicker = ({ onChange }: { onChange: (hexcode: string) => void }) => {
-    const [value, setValue] = React.useState<string>('#0055AA');
+const ColorPicker = ({
+    onChange,
+    initialColor
+}: {
+    onChange: (hexcode: string) => void;
+    initialColor?: string;
+}) => {
+    const [value, setValue] = React.useState<string>(initialColor ?? '#0055AA');
 
     const handleColorChange = (newValue: string) => {
         onChange(newValue);

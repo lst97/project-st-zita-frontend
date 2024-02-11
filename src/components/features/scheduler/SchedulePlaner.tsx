@@ -9,66 +9,43 @@ import {
 } from '@devexpress/dx-react-scheduler-material-ui';
 import { useEffect, useRef, useState } from 'react';
 import CustomTimeTableCell from './TimeTableCells';
-import { getSelectedCells } from '../../../utils/SchedulerHelpers';
+import {
+    getSelectedCellsFromDragging,
+    isDateIncluded
+} from '../../../utils/SchedulerHelpers';
 import { Paper } from '@mui/material';
 import { SelectedSchedule } from '../../../models/scheduler/ScheduleModel';
 import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
 
 const SchedulePlaner = ({
     isEnabled,
-    data,
     onFinish,
+    data,
     currentDate,
     onCurrentDateChange,
     currentViewName,
     onCurrentViewNameChange
 }: {
     isEnabled: boolean;
-    data?: string[];
+    data?: Date[];
     onFinish: (selectedCells: SelectedSchedule) => void;
     currentDate: Date;
     onCurrentDateChange: (date: Date) => void;
     currentViewName: string;
     onCurrentViewNameChange: (viewName: string) => void;
 }) => {
-    const [selectedCells, setSelectedCells] = useState<string[]>([]);
-    const lastEnteredCellRef = useRef<string | null>(null);
+    /// Note:
+    // 1. Refactor to UseReducer for Complex State Logic
+    // Given the complexity of your state management (especially with dragging logic), consider using the useReducer hook.
+    // It can make state transitions more predictable and centralized, improving the manageability of complex interactions
+    // const [state, dispatch] = useReducer(reducer, initialState);
+    // 2. Optimize mobile user experience
+    // Consider how the app will work on mobile devices. The drag-and-drop interaction may not be as intuitive on touch screens.
 
-    const toDxLocaleString = (date: Date) => {
-        // Use toLocaleString to format the date in the desired timezone
-        const formattedDateString = date
-            .toLocaleString('en-US', {
-                timeZone: 'Australia/Melbourne',
-                weekday: 'short', // "Sun"
-                year: 'numeric', // "2024"
-                month: 'short', // "Jan"
-                day: '2-digit', // "28"
-                hour: '2-digit', // "10"
-                minute: '2-digit', // "00"
-                second: '2-digit', // "00"
-                hour12: false // Use 24-hour time
-            })
-            .replace(/,/g, '');
+    // TODO - Build 3: Optimize Array Manipulations,  Use Set for Performance
+    const [selectedCells, setSelectedCells] = useState<Date[]>([]);
 
-        // Since toLocaleString may not include the timezone abbreviation directly,
-        const timezoneAbbreviation =
-            'GMT+1100 (Australian Eastern Daylight Time)';
-
-        return `${formattedDateString} ${timezoneAbbreviation}`;
-    };
-    useEffect(() => {
-        // required Sun Jan 28 2024 10:30:00 GMT+1100 (Australian Eastern Daylight Time)
-        if (!data) return;
-
-        let dates = Array.from(new Set(data));
-        const dxDateString = new Array<string>();
-        for (let date of dates) {
-            // Create a Date object from the ISO string
-            const dateString = toDxLocaleString(new Date(date));
-            dxDateString.push(dateString);
-        }
-        setSelectedCells(dxDateString);
-    }, [data]); // Dependency array, useEffect runs when `data` changes
+    const lastEnteredCellRef = useRef<Date | null>(null);
 
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState<Date | null>(null);
@@ -76,30 +53,37 @@ const SchedulePlaner = ({
         'select'
     );
 
+    useEffect(() => {
+        if (data) {
+            setSelectedCells(data);
+        }
+    }, [data]);
+
     const handleMouseDown = (
         event: React.MouseEvent<HTMLDivElement>,
-        date: Date
+        selectedDate: Date
     ) => {
         if (!isEnabled) {
             return;
         }
 
         event.preventDefault();
-        const dateString = date.toString();
         setIsDragging(true);
-        setDragStart(date);
+        setDragStart(selectedDate);
 
-        if (selectedCells.includes(dateString)) {
+        if (isDateIncluded(selectedCells, selectedDate)) {
             // If the cell is already selected, the initial action is to unselect
             setSelectedCells((prevSelectedCells) =>
-                prevSelectedCells.filter((date) => date !== dateString)
+                prevSelectedCells.filter(
+                    (date) => date.getTime() !== selectedDate.getTime()
+                )
             );
             setInitialAction('unselect');
         } else {
             // If the cell is not selected, the initial action is to select
             setSelectedCells((prevSelectedCells) => [
                 ...prevSelectedCells,
-                dateString
+                selectedDate
             ]);
             setInitialAction('select');
         }
@@ -108,18 +92,18 @@ const SchedulePlaner = ({
     const handleMouseEnter = (currentDate: Date) => {
         if (!isEnabled) return;
 
-        const dateString = currentDate.toString();
-        if (lastEnteredCellRef.current === dateString) {
+        if (lastEnteredCellRef.current === currentDate) {
             // Do not update the state if the mouse has not moved to a new cell
             return;
         }
 
         // Update the last entered cell
-        lastEnteredCellRef.current = dateString;
+        lastEnteredCellRef.current = currentDate;
 
+        // TODO: If the mouse moving too fast, isDragging && dragStart may not be updated yet due to the async nature of state updates
         if (isDragging && dragStart) {
             setSelectedCells((prevSelectedCells) => {
-                const newSelectedCells = getSelectedCells(
+                const newSelectedCells = getSelectedCellsFromDragging(
                     dragStart,
                     currentDate
                 );
@@ -127,7 +111,8 @@ const SchedulePlaner = ({
                 if (initialAction === 'unselect') {
                     // Unselect mode - remove cells from the selection
                     return prevSelectedCells.filter(
-                        (cell) => !newSelectedCells.includes(cell)
+                        (cellDate) =>
+                            !isDateIncluded(newSelectedCells, cellDate)
                     );
                 } else {
                     // Select mode - add new cells to the selection
@@ -139,10 +124,10 @@ const SchedulePlaner = ({
         }
     };
 
-    const filterInvalidSelectedCells = (selectedCells: string[]): string[] => {
+    // Filter out invalid selected cells, incorrect time will be selected if the user dragged outside the schedule planner
+    const filterInvalidSelectedCells = (selectedCells: Date[]): Date[] => {
         return selectedCells.filter((cell) => {
-            const date = new Date(cell);
-            // Extract minutes
+            const date = cell;
             const minutes = date.getMinutes();
             // Check if minutes are exactly on the hour (00) or half-hour (30)
             return minutes === 0 || minutes === 30;
@@ -151,14 +136,13 @@ const SchedulePlaner = ({
 
     const handleMouseUp = () => {
         if (!isEnabled) return;
+
         let year = currentDate.getFullYear();
         let weekNumber = getISOWeekNumberFromDate(currentDate);
 
         let selectedSchedule = new SelectedSchedule(
             year,
             weekNumber,
-            // Filter out invalid selected cells, maybe the user dragged too fast or bug which
-            // caused the cells is not in 30 minutes interval
             filterInvalidSelectedCells(selectedCells)
         );
 
@@ -169,7 +153,6 @@ const SchedulePlaner = ({
     };
 
     const handleCurrentDateChange = (date: Date) => {
-        setSelectedCells([]);
         onCurrentDateChange(date);
     };
 
@@ -177,7 +160,7 @@ const SchedulePlaner = ({
         <Paper
             style={{
                 userSelect: 'none', // Prevent text selection during drag
-                height: '500px' // Adjust height as needed
+                height: '500px'
             }}
         >
             <Scheduler>
@@ -194,7 +177,7 @@ const SchedulePlaner = ({
                         <CustomTimeTableCell
                             {...props}
                             isDisabled={!isEnabled}
-                            startDate={props.startDate!}
+                            currentCellDate={props.startDate!}
                             onCellEnter={handleMouseEnter}
                             onCellMouseDown={handleMouseDown}
                             onCellMouseUp={handleMouseUp}
