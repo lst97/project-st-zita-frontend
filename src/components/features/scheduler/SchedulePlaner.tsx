@@ -158,9 +158,10 @@ const SchedulePlaner = ({
 
     return (
         <Paper
-            style={{
+            sx={{
                 userSelect: 'none', // Prevent text selection during drag
-                height: '500px'
+                height: '500px',
+                width: '100%'
             }}
         >
             <Scheduler>
@@ -171,8 +172,16 @@ const SchedulePlaner = ({
                     onCurrentViewNameChange={onCurrentViewNameChange}
                 />
                 <WeekView
+                    dayScaleEmptyCellComponent={(props) => (
+                        <WeekView.DayScaleEmptyCell
+                            {...props}
+                            sx={{ minWidth: 0 }}
+                        />
+                    )}
+                    timeScaleLayoutComponent={() => null}
                     startDayHour={8}
                     endDayHour={16}
+                    timeScaleLabelComponent={() => null}
                     timeTableCellComponent={(props) => (
                         <CustomTimeTableCell
                             {...props}

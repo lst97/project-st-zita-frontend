@@ -267,81 +267,98 @@ const StaffScheduler = () => {
                         data={selectedPlannerCells}
                         onFinish={handlePlannerCellsSelectionFinish}
                     />
-                    <StaffAccordion title="Assigned">
-                        {Object.keys(selectedScheduleMap).map((staffName) => {
-                            const staff = staffDataList.find(
-                                (staff) => staff.name === staffName
-                            );
-
-                            const scheduleValue =
-                                selectedScheduleMap[staffName];
-
-                            let dates = scheduleValue.schedule.map(
-                                (date) => new Date(date)
-                            );
-
-                            let totalHours = calculateDateGroupTotalHours(
-                                groupContinuesTime(dates)
-                            );
-
-                            return staff &&
-                                scheduleValue.schedule.length > 0 ? (
-                                <StaffCard
-                                    key={`staff-card-${staff.name}`}
-                                    onDelete={handleStaffCardDelete}
-                                    data={
-                                        new StaffCardContent(
-                                            staff.name,
-                                            totalHours,
-                                            staff.color,
-                                            staff.image,
-                                            staff.phoneNumber
-                                        )
-                                    }
-                                    onClick={() =>
-                                        handleStaffCardClick(staff.name)
-                                    }
-                                    isSelected={selectedStaff === staff.name}
-                                />
-                            ) : null; // If no matching staff data is found, render nothing
-                        })}
-                    </StaffAccordion>
-                    <StaffAccordion title="Not Assigned">
-                        {staffDataList
-                            .filter(
-                                (staff) =>
-                                    !(
-                                        selectedScheduleMap[staff.name]
-                                            ?.schedule.length > 0
-                                    )
-                            )
-                            .map((staff) => (
-                                <StaffCard
-                                    key={staff.name}
-                                    onDelete={handleStaffCardDelete}
-                                    data={
-                                        new StaffCardContent(
-                                            staff.name,
-                                            '00:00',
-                                            staff.color,
-                                            staff.image,
-                                            staff.phoneNumber
-                                        )
-                                    }
-                                    onClick={() =>
-                                        handleStaffCardClick(staff.name)
-                                    }
-                                    isSelected={selectedStaff === staff.name}
-                                />
-                            ))}
-                    </StaffAccordion>
                     <Button
                         variant="contained"
                         color="primary"
                         onClick={handleAddStaffOpenDialog}
+                        sx={{ marginTop: 2, marginBottom: 2, width: '100%' }}
                     >
                         Add Staff
                     </Button>
+                    <Grid container spacing={2}>
+                        <Grid xs={6}>
+                            <StaffAccordion title="Assigned">
+                                {Object.keys(selectedScheduleMap).map(
+                                    (staffName) => {
+                                        const staff = staffDataList.find(
+                                            (staff) => staff.name === staffName
+                                        );
+
+                                        const scheduleValue =
+                                            selectedScheduleMap[staffName];
+
+                                        let dates = scheduleValue.schedule.map(
+                                            (date) => new Date(date)
+                                        );
+
+                                        let totalHours =
+                                            calculateDateGroupTotalHours(
+                                                groupContinuesTime(dates)
+                                            );
+
+                                        return staff &&
+                                            scheduleValue.schedule.length >
+                                                0 ? (
+                                            <StaffCard
+                                                key={`staff-card-${staff.name}`}
+                                                onDelete={handleStaffCardDelete}
+                                                data={
+                                                    new StaffCardContent(
+                                                        staff.name,
+                                                        totalHours,
+                                                        staff.color,
+                                                        staff.image,
+                                                        staff.phoneNumber
+                                                    )
+                                                }
+                                                onClick={() =>
+                                                    handleStaffCardClick(
+                                                        staff.name
+                                                    )
+                                                }
+                                                isSelected={
+                                                    selectedStaff === staff.name
+                                                }
+                                            />
+                                        ) : null; // If no matching staff data is found, render nothing
+                                    }
+                                )}
+                            </StaffAccordion>
+                        </Grid>
+                        <Grid xs={6}>
+                            <StaffAccordion title="Not Assigned">
+                                {staffDataList
+                                    .filter(
+                                        (staff) =>
+                                            !(
+                                                selectedScheduleMap[staff.name]
+                                                    ?.schedule.length > 0
+                                            )
+                                    )
+                                    .map((staff) => (
+                                        <StaffCard
+                                            key={staff.name}
+                                            onDelete={handleStaffCardDelete}
+                                            data={
+                                                new StaffCardContent(
+                                                    staff.name,
+                                                    '00:00',
+                                                    staff.color,
+                                                    staff.image,
+                                                    staff.phoneNumber
+                                                )
+                                            }
+                                            onClick={() =>
+                                                handleStaffCardClick(staff.name)
+                                            }
+                                            isSelected={
+                                                selectedStaff === staff.name
+                                            }
+                                        />
+                                    ))}
+                            </StaffAccordion>
+                        </Grid>
+                    </Grid>
                     <AddStaffDialog
                         open={dialogOpen}
                         onClose={handleAddStaffCloseDialog}

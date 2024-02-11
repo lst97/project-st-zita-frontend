@@ -142,16 +142,16 @@ export default function Dashboard() {
                             theme.palette.mode === 'light'
                                 ? theme.palette.grey[100]
                                 : theme.palette.grey[900],
-                        flexGrow: 1,
+
                         height: '100vh',
-                        overflow: 'auto'
+                        flexGrow: 1
                     }}
                 >
                     <Toolbar />
-                    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+                    <Box sx={{ overflow: 'auto', padding: 2 }}>
                         <StaffScheduler />
                         <Copyright sx={{ pt: 4 }} />
-                    </Container>
+                    </Box>
                 </Box>
             </Box>
         </ThemeProvider>

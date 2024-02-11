@@ -1,5 +1,4 @@
 import { styled } from '@mui/material/styles';
-import { WeekView } from '@devexpress/dx-react-scheduler-material-ui';
 
 // Define the types for the additional props
 interface TimeTableCellProps {
@@ -7,15 +6,14 @@ interface TimeTableCellProps {
     disabled?: boolean;
 }
 
-export const StyledTimeTableCell = styled(
-    WeekView.TimeTableCell
-)<TimeTableCellProps>(({ theme, selected, disabled }) => ({
+export const StyledTimeTableCell = styled('td', {
+    shouldForwardProp: (prop) => prop !== 'selected' && prop !== 'disabled'
+})<TimeTableCellProps>(({ theme, selected, disabled }) => ({
     '&&:hover': {
         backgroundColor: disabled
             ? theme.palette.action.disabled
             : theme.palette.primary.main
     },
-
     backgroundColor: disabled
         ? theme.palette.action.disabled
         : selected

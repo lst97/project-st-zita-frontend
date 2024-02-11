@@ -32,6 +32,10 @@ const CustomTimeTableCell = ({
                 onCellMouseDown(event, currentCellDate)
             }
             onMouseUp={onCellMouseUp}
+            sx={{
+                height: '20px',
+                border: '1px solid #e0e0e0'
+            }}
         />
     );
 };
