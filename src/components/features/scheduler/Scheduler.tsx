@@ -373,6 +373,7 @@ const StaffScheduler = () => {
                     currentViewName={currentViewName}
                     onCurrentDateChange={onCurrentDateChange}
                     onCurrentViewNameChange={onCurrentViewNameChange}
+                    onDelete={() => {}}
                 />
             </Grid>
         </Grid>

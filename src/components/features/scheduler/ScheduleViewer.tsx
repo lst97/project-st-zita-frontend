@@ -32,13 +32,15 @@ const ScheduleViewer = ({
     currentDate,
     onCurrentDateChange,
     currentViewName,
-    onCurrentViewNameChange
+    onCurrentViewNameChange,
+    onDelete
 }: {
     data: StaffScheduleMap;
     currentDate: Date;
     onCurrentDateChange: (date: Date) => void;
     currentViewName: string;
     onCurrentViewNameChange: (viewName: string) => void;
+    onDelete: (appointment: StaffAppointment) => void;
 }) => {
     const appointments = new Map<string, StaffAppointment[]>();
 
