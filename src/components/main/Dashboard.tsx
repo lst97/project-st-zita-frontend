@@ -8,15 +8,19 @@ import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
-import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { mainListItems, secondaryListItems } from './DrawerItems';
-import StaffScheduler from '../features/scheduler/Scheduler';
+import {
+    guestMainListItems,
+    guestSecondaryListItems,
+    managerMainListItems,
+    managerSecondaryListItems
+} from './DrawerItems';
 import Copyright from '../common/footers/Copyright';
+import { AccessTokenService } from '../../services/TokenService';
 
 const drawerWidth: number = 240;
 
@@ -71,7 +75,11 @@ const Drawer = styled(MuiDrawer, {
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
-export default function Dashboard() {
+export default function Dashboard({
+    children
+}: {
+    children?: React.ReactNode;
+}) {
     const [open, setOpen] = React.useState(true);
     const toggleDrawer = () => {
         setOpen(!open);
@@ -108,11 +116,13 @@ export default function Dashboard() {
                         >
                             Dashboard
                         </Typography>
-                        <IconButton color="inherit">
-                            <Badge badgeContent={4} color="secondary">
-                                <NotificationsIcon />
-                            </Badge>
-                        </IconButton>
+                        {AccessTokenService.getToken() && (
+                            <IconButton color="inherit">
+                                <Badge badgeContent={4} color="secondary">
+                                    <NotificationsIcon />
+                                </Badge>
+                            </IconButton>
+                        )}
                     </Toolbar>
                 </AppBar>
                 <Drawer variant="permanent" open={open}>
@@ -130,9 +140,19 @@ export default function Dashboard() {
                     </Toolbar>
                     <Divider />
                     <List component="nav">
-                        {mainListItems}
-                        <Divider sx={{ my: 1 }} />
-                        {secondaryListItems}
+                        {AccessTokenService.getToken() ? (
+                            <React.Fragment>
+                                {managerMainListItems}
+                                <Divider sx={{ my: 1 }} />
+                                {managerSecondaryListItems}
+                            </React.Fragment>
+                        ) : (
+                            <React.Fragment>
+                                {guestMainListItems}
+                                <Divider sx={{ my: 1 }} />
+                                {guestSecondaryListItems}
+                            </React.Fragment>
+                        )}
                     </List>
                 </Drawer>
                 <Box
@@ -149,7 +169,7 @@ export default function Dashboard() {
                 >
                     <Toolbar />
                     <Box sx={{ overflow: 'auto', padding: 2 }}>
-                        <StaffScheduler />
+                        {children}
                         <Copyright sx={{ pt: 4 }} />
                     </Box>
                 </Box>

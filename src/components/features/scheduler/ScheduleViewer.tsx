@@ -1,4 +1,5 @@
-import { Paper } from '@mui/material';
+import { IconButton, Paper, Tooltip } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import StaffAppointment from '../../../models/scheduler/StaffAppointment';
 import {
     AppointmentTooltip,
@@ -22,6 +23,11 @@ import {
     groupContinuesTime,
     sortDates
 } from '../../../utils/SchedulerHelpers';
+import { IosShare } from '@mui/icons-material';
+import ShareAppointmentDialog from './ShareAppointmentDialog';
+import { useState } from 'react';
+import { AccessTokenService } from '../../../services/TokenService';
+import React from 'react';
 
 const handleDeleteAppointment = () => {
     console.log('handleDeleteAppointment');
@@ -37,11 +43,13 @@ const ScheduleViewer = ({
 }: {
     data: StaffScheduleMap;
     currentDate: Date;
-    onCurrentDateChange: (date: Date) => void;
+    onCurrentDateChange?: (date: Date) => void;
     currentViewName: string;
-    onCurrentViewNameChange: (viewName: string) => void;
-    onDelete: (appointment: StaffAppointment) => void;
+    onCurrentViewNameChange?: (viewName: string) => void;
+    onDelete?: (appointment: StaffAppointment) => void;
 }) => {
+    const theme = useTheme();
+    const [dialogOpen, setDialogOpen] = useState(false);
     const appointments = new Map<string, StaffAppointment[]>();
 
     Object.entries(data).forEach(([staffName, selectedSchedule]) => {
@@ -57,12 +65,25 @@ const ScheduleViewer = ({
         );
     });
 
+    const handleShareScheduleOpenDialog = () => {
+        setDialogOpen(true);
+    };
+
+    const handleShareScheduleCloseDialog = () => {
+        setDialogOpen(false);
+    };
+
     let dxReactAppointments = Array.from(appointments.values()).flat();
+
+    const handleShareClick = async () => {
+        handleShareScheduleOpenDialog();
+    };
 
     return (
         <Paper
             style={{
-                userSelect: 'none' // Prevent text selection during drag
+                userSelect: 'none', // Prevent text selection during drag
+                position: 'relative'
             }}
         >
             <Scheduler data={dxReactAppointments}>
@@ -81,6 +102,7 @@ const ScheduleViewer = ({
                 <Toolbar />
                 <DateNavigator />
                 <TodayButton />
+
                 <AppointmentTooltip
                     headerComponent={(props) => (
                         <AppointmentHeader
@@ -90,6 +112,28 @@ const ScheduleViewer = ({
                     )}
                 />
             </Scheduler>
+            {AccessTokenService.getToken() && (
+                <React.Fragment>
+                    <Tooltip title="Share" arrow>
+                        <IconButton
+                            sx={{
+                                position: 'absolute',
+                                top: 10,
+                                right: 20,
+                                color: theme.palette.primary.main
+                            }}
+                            onClick={handleShareClick}
+                        >
+                            <IosShare />
+                        </IconButton>
+                    </Tooltip>
+                    <ShareAppointmentDialog
+                        open={dialogOpen}
+                        onRemove={handleShareScheduleCloseDialog}
+                        onDone={handleShareScheduleCloseDialog}
+                    />
+                </React.Fragment>
+            )}
         </Paper>
     );
 };

@@ -2,6 +2,7 @@ import { Routes as Router, Route, Navigate, Outlet } from 'react-router-dom';
 import SignInSide from './SignInPage/SignInPage';
 import HomePage from './HomePage/HomePage';
 import { AccessTokenService } from '../services/TokenService';
+import SharedSchedulePage from './SharedSchedulePage/SharedSchedulePage';
 
 type Props = {};
 
@@ -37,6 +38,11 @@ const routesConfig: RouteObject[] = [
             }
             // Add more nested private routes here
         ]
+    },
+    {
+        path: '/scheduler/share/:linkId',
+        element: <SharedSchedulePage />,
+        private: false
     }
 ];
 

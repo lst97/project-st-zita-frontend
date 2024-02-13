@@ -11,6 +11,7 @@ import { sortDates, groupContinuesTime } from '../utils/SchedulerHelpers';
 import { CreateStaffForm } from '../models/forms/scheduler/CreateStaffForm';
 import { SignInForm } from '../models/forms/auth/SignInForm';
 import { AccessTokenService } from './TokenService';
+import { CreateShareLinkForm } from '../models/forms/scheduler/CreateShareLinkForm';
 
 export class ApiAuthenticationErrorHandler {
     private navigate?: NavigateFunction;
@@ -318,6 +319,29 @@ export class AppointmentApiService extends ApiResultIndicator {
             apiErrorHandler.handleError(error);
             errorHandler?.handleError(error);
             return false;
+        }
+    }
+
+    static async shareAppointments(
+        permission: string,
+        weekViewIds?: string[],
+        expiry?: string
+    ) {
+        const createShareLinkForm = new CreateShareLinkForm({
+            permission: permission,
+            weekViewIds: weekViewIds,
+            expiry: expiry
+        });
+
+        try {
+            const response = await apiService.post(
+                API_ENDPOINTS.createShareAppointmentsLink,
+                createShareLinkForm
+            );
+            return response.data;
+        } catch (error) {
+            apiErrorHandler.handleError(error);
+            return null;
         }
     }
 }

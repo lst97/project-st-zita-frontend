@@ -363,7 +363,7 @@ const StaffScheduler = () => {
                         open={dialogOpen}
                         onClose={handleAddStaffCloseDialog}
                         onAddStaff={handleAddStaff}
-                    />{' '}
+                    />
                 </React.Fragment>
             </Grid>
             <Grid xs={7}>

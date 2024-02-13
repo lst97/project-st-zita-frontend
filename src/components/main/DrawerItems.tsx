@@ -9,45 +9,70 @@ import PeopleIcon from '@mui/icons-material/People';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 
-export const mainListItems = (
-  <React.Fragment>
-    <ListItemButton>
-      <ListItemIcon>
-        <DashboardIcon />
-      </ListItemIcon>
-      <ListItemText primary="Staff Schedule" />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <ShoppingCartIcon />
-      </ListItemIcon>
-      <ListItemText primary="Ingredient Order" />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <PeopleIcon />
-      </ListItemIcon>
-      <ListItemText primary="Stock Management" />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <BarChartIcon />
-      </ListItemIcon>
-      <ListItemText primary="Reports" />
-    </ListItemButton>
-  </React.Fragment>
+export const managerMainListItems = (
+    <React.Fragment>
+        <ListItemButton>
+            <ListItemIcon>
+                <DashboardIcon />
+            </ListItemIcon>
+            <ListItemText primary="Staff Schedule" />
+        </ListItemButton>
+        <ListItemButton>
+            <ListItemIcon>
+                <ShoppingCartIcon />
+            </ListItemIcon>
+            <ListItemText primary="Ingredient Order" />
+        </ListItemButton>
+        <ListItemButton>
+            <ListItemIcon>
+                <PeopleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Stock Management" />
+        </ListItemButton>
+        <ListItemButton>
+            <ListItemIcon>
+                <BarChartIcon />
+            </ListItemIcon>
+            <ListItemText primary="Reports" />
+        </ListItemButton>
+    </React.Fragment>
 );
 
-export const secondaryListItems = (
-  <React.Fragment>
-    <ListSubheader component="div" inset>
-      Saved reports
-    </ListSubheader>
-    <ListItemButton>
-      <ListItemIcon>
-        <AssignmentIcon />
-      </ListItemIcon>
-      <ListItemText primary="Current month" />
-    </ListItemButton>
-  </React.Fragment>
+export const managerSecondaryListItems = (
+    <React.Fragment>
+        <ListSubheader component="div" inset>
+            Saved reports
+        </ListSubheader>
+        <ListItemButton>
+            <ListItemIcon>
+                <AssignmentIcon />
+            </ListItemIcon>
+            <ListItemText primary="Current month" />
+        </ListItemButton>
+    </React.Fragment>
+);
+
+export const guestMainListItems = (
+    <React.Fragment>
+        <ListItemButton selected={true}>
+            <ListItemIcon>
+                <DashboardIcon />
+            </ListItemIcon>
+            <ListItemText primary="Shared Schedule" />
+        </ListItemButton>
+    </React.Fragment>
+);
+
+export const guestSecondaryListItems = (
+    <React.Fragment>
+        <ListSubheader component="div" inset>
+            Other
+        </ListSubheader>
+        <ListItemButton>
+            <ListItemIcon>
+                <AssignmentIcon />
+            </ListItemIcon>
+            <ListItemText primary="Feedback" />
+        </ListItemButton>
+    </React.Fragment>
 );
