@@ -1,5 +1,5 @@
 // AddStaffDialog.js
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -60,6 +60,12 @@ const AddStaffDialog = ({
         onAddStaff(newStaff);
         onClose();
     };
+
+    useEffect(() => {
+        if (open) {
+            setRepresentColor(ColorUtils.generateRandomColor());
+        }
+    }, [open]);
 
     return (
         <Dialog open={open} onClose={onClose}>
