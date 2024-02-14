@@ -12,8 +12,9 @@ import { CreateStaffForm } from '../models/forms/scheduler/CreateStaffForm';
 import { SignInForm } from '../models/forms/auth/SignInForm';
 import { AccessTokenService } from './TokenService';
 import { CreateShareLinkForm } from '../models/forms/scheduler/CreateShareLinkForm';
+import { InvalidAppointmentShareLinkId } from '../models/errors/ApiErrors';
 
-export class ApiAuthenticationErrorHandler {
+export class ApiAuthenticationErrorHandler implements IApiErrorHandler {
     private navigate?: NavigateFunction;
     private showSnackbar?: (message: string, severity: 'error') => void;
 
@@ -53,7 +54,7 @@ export class ApiAuthenticationErrorHandler {
         }
     }
 }
-interface IApiErrorHandler {
+export interface IApiErrorHandler {
     handleError(error: any): void;
 }
 class ApiErrorHandler implements IApiErrorHandler {
@@ -227,17 +228,38 @@ export class StaffApiService extends ApiResultIndicator {
     }
 }
 export class AppointmentApiService extends ApiResultIndicator {
-    static async fetchAppointmentsWeekViewData(
-        id: string,
-        errorHandler?: IApiErrorHandler
-    ): Promise<AppointmentData[]> {
+    static async fetchAppointmentsWeekViewData({
+        id,
+        linkId,
+        errorHandler
+    }: {
+        id: string;
+        linkId?: string;
+        errorHandler?: IApiErrorHandler;
+    }): Promise<AppointmentData[]> {
         try {
-            const url = formatUrl(API_ENDPOINTS.fetchAppointmentsData, {
-                weekViewId: id
-            });
+            let url;
+            if (linkId) {
+                url = formatUrl(API_ENDPOINTS.fetchAppointmentsDataByLinkId, {
+                    weekViewId: id,
+                    linkId: linkId
+                });
+            } else {
+                // not using weekViewId in the url as query param
+                url = formatUrl(API_ENDPOINTS.fetchAppointmentsData, {
+                    weekViewId: id
+                }).split('?')[0];
+            }
             const response = await apiService.get(url);
+            if (!response.data) {
+                // invalid linkId
+                throw new InvalidAppointmentShareLinkId('Invalid linkId');
+            }
             return response.data as AppointmentData[];
         } catch (error) {
+            if (error instanceof InvalidAppointmentShareLinkId) {
+                throw error;
+            }
             apiErrorHandler.handleError(error);
             errorHandler?.handleError(error);
             return [];
@@ -322,7 +344,7 @@ export class AppointmentApiService extends ApiResultIndicator {
         }
     }
 
-    static async shareAppointments(
+    static async createShareAppointments(
         permission: string,
         weekViewIds?: string[],
         expiry?: string

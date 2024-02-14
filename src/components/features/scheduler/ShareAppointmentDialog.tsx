@@ -78,7 +78,7 @@ const AddStaffDialog = ({
     const handleCopyLinkClick = async () => {
         setIsLoading(true);
 
-        const linkId = await AppointmentApiService.shareAppointments(
+        const linkId = await AppointmentApiService.createShareAppointments(
             selectedPermission.toString()
         );
 

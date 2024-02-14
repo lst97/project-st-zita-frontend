@@ -16,7 +16,8 @@ import StaffData from '../../../models/share/scheduler/StaffData';
 import {
     StaffApiService,
     AppointmentApiService,
-    ApiAuthenticationErrorHandler
+    ApiAuthenticationErrorHandler,
+    IApiErrorHandler
 } from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
 import {
@@ -29,6 +30,84 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SnackbarContext } from '../../../context/SnackbarContext';
 import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContext';
+
+interface FetchAppointmentParams {
+    linkId?: string;
+    currentDate: Date;
+    apiErrorHandler?: IApiErrorHandler;
+    onUpdate?: (data: StaffScheduleMap) => void;
+}
+
+function updateSelectedScheduleMap(
+    appointmentsData: AppointmentData[],
+    year: number,
+    weekNumber: number
+): StaffScheduleMap {
+    const newSelectedScheduleMap: StaffScheduleMap = {};
+
+    appointmentsData.forEach((appointment) => {
+        const staffName = appointment.staffName;
+
+        if (!newSelectedScheduleMap[staffName]) {
+            newSelectedScheduleMap[staffName] = new SelectedSchedule(
+                year,
+                weekNumber,
+                []
+            );
+        }
+
+        populateScheduleForStaff(
+            newSelectedScheduleMap[staffName].schedule,
+            new Date(appointment.startDate),
+            new Date(appointment.endDate)
+        );
+    });
+
+    return newSelectedScheduleMap;
+}
+
+function populateScheduleForStaff(
+    schedule: Date[],
+    startDateStr: Date,
+    endDateStr: Date
+) {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    const THIRTY_MINUTES_IN_MS = 30 * 60 * 1000;
+
+    for (
+        let tempDate = startDate;
+        tempDate <= endDate;
+        tempDate = new Date(tempDate.getTime() + THIRTY_MINUTES_IN_MS)
+    ) {
+        schedule.push(tempDate);
+    }
+}
+
+export const fetchAppointmentWeekViewData = async (
+    params: FetchAppointmentParams
+) => {
+    const weekNumber = getISOWeekNumberFromDate(params.currentDate);
+    const year = params.currentDate.getFullYear();
+    const weekViewId = calculateWeekViewId(params.currentDate);
+
+    const appointmentsData =
+        await AppointmentApiService.fetchAppointmentsWeekViewData({
+            linkId: params.linkId,
+            id: weekViewId,
+            errorHandler: params.apiErrorHandler
+        });
+
+    const newSelectedScheduleMap = updateSelectedScheduleMap(
+        appointmentsData,
+        year,
+        weekNumber
+    );
+
+    params.onUpdate?.(newSelectedScheduleMap);
+
+    return newSelectedScheduleMap;
+};
 
 const StaffScheduler = () => {
     const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
@@ -149,74 +228,13 @@ const StaffScheduler = () => {
     // Step 2: fetch appointment data base on current scheduler week view (week number, year)
     // Step 3: map the appointments to the scheduleMap
 
-    const fetchAppointmentWeekViewData = async () => {
-        const weekNumber = getISOWeekNumberFromDate(currentDate);
-        const year = currentDate.getFullYear();
-        const weekViewId = calculateWeekViewId(currentDate);
-
-        const appointmentsData =
-            await AppointmentApiService.fetchAppointmentsWeekViewData(
-                weekViewId,
-                apiAuthErrorHandler
-            );
-        const newSelectedScheduleMap = updateSelectedScheduleMap(
-            appointmentsData,
-            year,
-            weekNumber
-        );
-
-        setSelectedScheduleMap(newSelectedScheduleMap);
-    };
-
-    function updateSelectedScheduleMap(
-        appointmentsData: AppointmentData[],
-        year: number,
-        weekNumber: number
-    ): StaffScheduleMap {
-        const newSelectedScheduleMap: StaffScheduleMap = {};
-
-        appointmentsData.forEach((appointment) => {
-            const staffName = appointment.staffName;
-
-            if (!newSelectedScheduleMap[staffName]) {
-                newSelectedScheduleMap[staffName] = new SelectedSchedule(
-                    year,
-                    weekNumber,
-                    []
-                );
-            }
-
-            populateScheduleForStaff(
-                newSelectedScheduleMap[staffName].schedule,
-                new Date(appointment.startDate),
-                new Date(appointment.endDate)
-            );
-        });
-
-        return newSelectedScheduleMap;
-    }
-
-    function populateScheduleForStaff(
-        schedule: Date[],
-        startDateStr: Date,
-        endDateStr: Date
-    ) {
-        const startDate = new Date(startDateStr);
-        const endDate = new Date(endDateStr);
-        const THIRTY_MINUTES_IN_MS = 30 * 60 * 1000;
-
-        for (
-            let tempDate = startDate;
-            tempDate <= endDate;
-            tempDate = new Date(tempDate.getTime() + THIRTY_MINUTES_IN_MS)
-        ) {
-            schedule.push(tempDate);
-        }
-    }
-
     // When user change the week view, fetch the new schedule data
     useEffect(() => {
-        fetchAppointmentWeekViewData();
+        fetchAppointmentWeekViewData({
+            currentDate: currentDate,
+            apiErrorHandler: apiAuthErrorHandler,
+            onUpdate: setSelectedScheduleMap
+        });
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentDate]);
@@ -303,13 +321,14 @@ const StaffScheduler = () => {
                                                 key={`staff-card-${staff.name}`}
                                                 onDelete={handleStaffCardDelete}
                                                 data={
-                                                    new StaffCardContent(
-                                                        staff.name,
-                                                        totalHours,
-                                                        staff.color,
-                                                        staff.image,
-                                                        staff.phoneNumber
-                                                    )
+                                                    new StaffCardContent({
+                                                        name: staff.name,
+                                                        totalHours: totalHours,
+                                                        color: staff.color,
+                                                        image: staff.image,
+                                                        phoneNumber:
+                                                            staff.phoneNumber
+                                                    })
                                                 }
                                                 onClick={() =>
                                                     handleStaffCardClick(
@@ -340,13 +359,14 @@ const StaffScheduler = () => {
                                             key={staff.name}
                                             onDelete={handleStaffCardDelete}
                                             data={
-                                                new StaffCardContent(
-                                                    staff.name,
-                                                    '00:00',
-                                                    staff.color,
-                                                    staff.image,
-                                                    staff.phoneNumber
-                                                )
+                                                new StaffCardContent({
+                                                    name: staff.name,
+                                                    totalHours: '00:00',
+                                                    color: staff.color,
+                                                    image: staff.image,
+                                                    phoneNumber:
+                                                        staff.phoneNumber
+                                                })
                                             }
                                             onClick={() =>
                                                 handleStaffCardClick(staff.name)

@@ -22,7 +22,7 @@ const StaffCard = ({
     isSelected
 }: {
     onClick: () => void;
-    onDelete: (staff: StaffCardContent) => void | null;
+    onDelete?: (staff: StaffCardContent) => void | null;
     isSelected: boolean;
     data: StaffCardContent;
 }) => {
