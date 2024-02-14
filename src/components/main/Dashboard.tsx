@@ -170,7 +170,7 @@ export default function Dashboard({
                     <Toolbar />
                     <Box sx={{ overflow: 'auto', padding: 2 }}>
                         {children}
-                        <Copyright sx={{ pt: 4 }} />
+                        <Copyright />
                     </Box>
                 </Box>
             </Box>

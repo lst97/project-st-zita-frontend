@@ -32,7 +32,7 @@ const CustomTimeTableCell = ({
             disableInteractive
             title={
                 isDisabled
-                    ? 'Please select a staff to continue'
+                    ? 'Select a staff to continue'
                     : currentCellDate.toLocaleTimeString('en-US', {
                           hour: 'numeric',
                           minute: 'numeric',
