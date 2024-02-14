@@ -11,103 +11,23 @@ import {
     SelectedSchedule,
     StaffScheduleMap
 } from '../../../models/scheduler/ScheduleModel';
-import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
 import StaffData from '../../../models/share/scheduler/StaffData';
 import {
     StaffApiService,
     AppointmentApiService,
-    ApiAuthenticationErrorHandler,
-    IApiErrorHandler
+    ApiAuthenticationErrorHandler
 } from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
 import {
     calculateDateGroupTotalHours,
     calculateWeekViewId,
+    fetchAppointmentWeekViewData,
     groupContinuesTime
 } from '../../../utils/SchedulerHelpers';
-import { AppointmentData } from '../../../models/share/scheduler/StaffAppointmentData';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SnackbarContext } from '../../../context/SnackbarContext';
 import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContext';
-
-interface FetchAppointmentParams {
-    linkId?: string;
-    currentDate: Date;
-    apiErrorHandler?: IApiErrorHandler;
-    onUpdate?: (data: StaffScheduleMap) => void;
-}
-
-function updateSelectedScheduleMap(
-    appointmentsData: AppointmentData[],
-    year: number,
-    weekNumber: number
-): StaffScheduleMap {
-    const newSelectedScheduleMap: StaffScheduleMap = {};
-
-    appointmentsData.forEach((appointment) => {
-        const staffName = appointment.staffName;
-
-        if (!newSelectedScheduleMap[staffName]) {
-            newSelectedScheduleMap[staffName] = new SelectedSchedule(
-                year,
-                weekNumber,
-                []
-            );
-        }
-
-        populateScheduleForStaff(
-            newSelectedScheduleMap[staffName].schedule,
-            new Date(appointment.startDate),
-            new Date(appointment.endDate)
-        );
-    });
-
-    return newSelectedScheduleMap;
-}
-
-function populateScheduleForStaff(
-    schedule: Date[],
-    startDateStr: Date,
-    endDateStr: Date
-) {
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
-    const THIRTY_MINUTES_IN_MS = 30 * 60 * 1000;
-
-    for (
-        let tempDate = startDate;
-        tempDate <= endDate;
-        tempDate = new Date(tempDate.getTime() + THIRTY_MINUTES_IN_MS)
-    ) {
-        schedule.push(tempDate);
-    }
-}
-
-export const fetchAppointmentWeekViewData = async (
-    params: FetchAppointmentParams
-) => {
-    const weekNumber = getISOWeekNumberFromDate(params.currentDate);
-    const year = params.currentDate.getFullYear();
-    const weekViewId = calculateWeekViewId(params.currentDate);
-
-    const appointmentsData =
-        await AppointmentApiService.fetchAppointmentsWeekViewData({
-            linkId: params.linkId,
-            id: weekViewId,
-            errorHandler: params.apiErrorHandler
-        });
-
-    const newSelectedScheduleMap = updateSelectedScheduleMap(
-        appointmentsData,
-        year,
-        weekNumber
-    );
-
-    params.onUpdate?.(newSelectedScheduleMap);
-
-    return newSelectedScheduleMap;
-};
 
 const StaffScheduler = () => {
     const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
@@ -295,7 +215,11 @@ const StaffScheduler = () => {
                     </Button>
                     <Grid container spacing={2}>
                         <Grid xs={6}>
-                            <StaffAccordion title="Assigned">
+                            <StaffAccordion
+                                key={`assigned-staff-card-`}
+                                title="Assigned"
+                                totalCount={staffDataList.length}
+                            >
                                 {Object.keys(selectedScheduleMap).map(
                                     (staffName) => {
                                         const staff = staffDataList.find(
@@ -318,7 +242,7 @@ const StaffScheduler = () => {
                                             scheduleValue.schedule.length >
                                                 0 ? (
                                             <StaffCard
-                                                key={`staff-card-${staff.name}`}
+                                                key={`assigned-staff-card-${staff.name}`}
                                                 onDelete={handleStaffCardDelete}
                                                 data={
                                                     new StaffCardContent({
@@ -345,7 +269,11 @@ const StaffScheduler = () => {
                             </StaffAccordion>
                         </Grid>
                         <Grid xs={6}>
-                            <StaffAccordion title="Not Assigned">
+                            <StaffAccordion
+                                key={`unassigned-staff-card-`}
+                                title="Not Assigned"
+                                totalCount={staffDataList.length}
+                            >
                                 {staffDataList
                                     .filter(
                                         (staff) =>
@@ -356,7 +284,7 @@ const StaffScheduler = () => {
                                     )
                                     .map((staff) => (
                                         <StaffCard
-                                            key={staff.name}
+                                            key={`unassigned-staff-card-${staff.name}`}
                                             onDelete={handleStaffCardDelete}
                                             data={
                                                 new StaffCardContent({

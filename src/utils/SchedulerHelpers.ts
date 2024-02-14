@@ -1,6 +1,93 @@
+import {
+    SelectedSchedule,
+    StaffScheduleMap
+} from '../models/scheduler/ScheduleModel';
 import StaffAppointment from '../models/scheduler/StaffAppointment';
+import { AppointmentData } from '../models/share/scheduler/StaffAppointmentData';
+import {
+    AppointmentApiService,
+    IApiErrorHandler
+} from '../services/ApiService';
 import { ColorUtils } from './ColorUtils';
 import { getISOWeekNumberFromDate } from './DateTimeUtils';
+
+interface FetchAppointmentParams {
+    linkId?: string;
+    currentDate: Date;
+    apiErrorHandler?: IApiErrorHandler;
+    onUpdate?: (data: StaffScheduleMap) => void;
+}
+
+function updateSelectedScheduleMap(
+    appointmentsData: AppointmentData[],
+    year: number,
+    weekNumber: number
+): StaffScheduleMap {
+    const newSelectedScheduleMap: StaffScheduleMap = {};
+
+    appointmentsData.forEach((appointment) => {
+        const staffName = appointment.staffName;
+
+        if (!newSelectedScheduleMap[staffName]) {
+            newSelectedScheduleMap[staffName] = new SelectedSchedule(
+                year,
+                weekNumber,
+                []
+            );
+        }
+
+        populateScheduleForStaff(
+            newSelectedScheduleMap[staffName].schedule,
+            new Date(appointment.startDate),
+            new Date(appointment.endDate)
+        );
+    });
+
+    return newSelectedScheduleMap;
+}
+
+function populateScheduleForStaff(
+    schedule: Date[],
+    startDateStr: Date,
+    endDateStr: Date
+) {
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+    const THIRTY_MINUTES_IN_MS = 30 * 60 * 1000;
+
+    for (
+        let tempDate = startDate;
+        tempDate <= endDate;
+        tempDate = new Date(tempDate.getTime() + THIRTY_MINUTES_IN_MS)
+    ) {
+        schedule.push(tempDate);
+    }
+}
+
+export const fetchAppointmentWeekViewData = async (
+    params: FetchAppointmentParams
+) => {
+    const weekNumber = getISOWeekNumberFromDate(params.currentDate);
+    const year = params.currentDate.getFullYear();
+    const weekViewId = calculateWeekViewId(params.currentDate);
+
+    const appointmentsData =
+        await AppointmentApiService.fetchAppointmentsWeekViewData({
+            linkId: params.linkId,
+            id: weekViewId,
+            errorHandler: params.apiErrorHandler
+        });
+
+    const newSelectedScheduleMap = updateSelectedScheduleMap(
+        appointmentsData,
+        year,
+        weekNumber
+    );
+
+    params.onUpdate?.(newSelectedScheduleMap);
+
+    return newSelectedScheduleMap;
+};
 
 function _calculateTimeInMinutes(date: Date): number {
     return date.getHours() * 60 + date.getMinutes();

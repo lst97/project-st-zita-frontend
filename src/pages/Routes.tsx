@@ -46,7 +46,7 @@ const routesConfig: RouteObject[] = [
     }
 ];
 
-const RenderRoutes = (props: Props) => {
+const RenderRoutes = () => {
     return (
         <Router>
             {routesConfig.map((route, index) => {
@@ -54,14 +54,14 @@ const RenderRoutes = (props: Props) => {
                     // Possibly including authentication checks
                     return (
                         <Route
-                            key={index}
+                            key={'private-' + index}
                             path={route.path}
                             element={route.element}
                         >
                             {route.children &&
                                 route.children.map((childRoute, childIndex) => (
                                     <Route
-                                        key={childIndex}
+                                        key={`${index}-${childIndex}`}
                                         path={childRoute.path}
                                         element={childRoute.element}
                                     />
@@ -72,7 +72,7 @@ const RenderRoutes = (props: Props) => {
                     // Public route
                     return (
                         <Route
-                            key={index}
+                            key={'public-' + index}
                             path={route.path}
                             element={route.element}
                         />

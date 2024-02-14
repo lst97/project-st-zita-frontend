@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import ScheduleViewer from '../../components/features/scheduler/ScheduleViewer';
 import Dashboard from '../../components/main/Dashboard';
 import { StaffScheduleMap } from '../../models/scheduler/ScheduleModel';
-import { fetchAppointmentWeekViewData } from '../../components/features/scheduler/Scheduler';
 import Grid from '@mui/material/Unstable_Grid2';
 import StaffCard from '../../components/common/cards/Cards';
 import StaffCardContent from '../../models/scheduler/StaffCardContent';
 import {
     calculateDateGroupTotalHours,
+    fetchAppointmentWeekViewData,
     groupContinuesTime
 } from '../../utils/SchedulerHelpers';
 import { useNavigate } from 'react-router-dom';
