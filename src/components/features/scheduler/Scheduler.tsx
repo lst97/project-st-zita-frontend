@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import StaffCard from '../../common/cards/Cards';
 import SchedulePlaner from './SchedulePlaner';
 import ScheduleViewer from './ScheduleViewer';
@@ -45,6 +45,7 @@ const StaffScheduler = () => {
 
     const { showSnackbar } = useContext(SnackbarContext)!;
     const { showIndicator } = useContext(LoadingIndicatorContext)!;
+    const schedulerRef = useRef(null);
 
     const navigate = useNavigate();
 
@@ -209,7 +210,11 @@ const StaffScheduler = () => {
                         variant="contained"
                         color="primary"
                         onClick={handleAddStaffOpenDialog}
-                        sx={{ marginTop: 2, marginBottom: 2, width: '100%' }}
+                        sx={{
+                            marginTop: 2,
+                            marginBottom: 2,
+                            width: '100%'
+                        }}
                     >
                         Add Staff
                     </Button>

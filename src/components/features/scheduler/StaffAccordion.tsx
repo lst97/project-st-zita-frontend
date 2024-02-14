@@ -25,7 +25,6 @@ const StaffAccordion = ({
                     : false
                 : false
         );
-        console.log('totalCount', totalCount);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [children]);
 
@@ -59,7 +58,11 @@ const StaffAccordion = ({
                     )}
                 </Grid>
             </AccordionSummary>
-            <AccordionDetails>{children}</AccordionDetails>
+            <AccordionDetails>
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {children}
+                </div>
+            </AccordionDetails>
         </Accordion>
     );
 };

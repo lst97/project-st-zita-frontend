@@ -34,15 +34,10 @@ const SchedulePlaner = ({
     currentViewName: string;
     onCurrentViewNameChange: (viewName: string) => void;
 }) => {
-    /// Note:
-    // 1. Refactor to UseReducer for Complex State Logic
-    // Given the complexity of your state management (especially with dragging logic), consider using the useReducer hook.
-    // It can make state transitions more predictable and centralized, improving the manageability of complex interactions
-    // const [state, dispatch] = useReducer(reducer, initialState);
-    // 2. Optimize mobile user experience
+    // 1. Optimize mobile user experience
     // Consider how the app will work on mobile devices. The drag-and-drop interaction may not be as intuitive on touch screens.
 
-    // TODO - Build 3: Optimize Array Manipulations,  Use Set for Performance
+    // TODO - Build 2: Optimize Array Manipulations,  Use Set for Performance
     const [selectedCells, setSelectedCells] = useState<Date[]>([]);
 
     const lastEnteredCellRef = useRef<Date | null>(null);
@@ -158,8 +153,8 @@ const SchedulePlaner = ({
 
     return (
         <Paper
-            sx={{
-                userSelect: 'none' // Prevent text selection during drag
+            onMouseLeave={() => {
+                handleMouseUp();
             }}
         >
             <Scheduler>
