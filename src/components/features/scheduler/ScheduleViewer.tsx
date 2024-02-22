@@ -1,4 +1,4 @@
-import { IconButton, Paper, Tooltip } from '@mui/material';
+import { IconButton, Menu, MenuItem, Paper, Tooltip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import StaffAppointment from '../../../models/scheduler/StaffAppointment';
 import {
@@ -28,6 +28,8 @@ import ShareAppointmentDialog from './ShareAppointmentDialog';
 import { useState } from 'react';
 import { AccessTokenService } from '../../../services/TokenService';
 import React from 'react';
+import { exportComponentAsImage } from '../../../utils/ImageUtils';
+import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
 
 const handleDeleteAppointment = () => {
     console.log('handleDeleteAppointment');
@@ -51,6 +53,20 @@ const ScheduleViewer = ({
     const theme = useTheme();
     const [dialogOpen, setDialogOpen] = useState(false);
     const appointments = new Map<string, StaffAppointment[]>();
+    const viewerComponentRef = React.useRef<HTMLDivElement>(null);
+
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const handleMenuClick = (event: any) => {
+        // Open menu only if onDelete callback is provided
+        if (onDelete != null) {
+            setAnchorEl(event.currentTarget);
+        }
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
 
     Object.entries(data).forEach(([staffName, selectedSchedule]) => {
         if ((selectedSchedule?.schedule?.length ?? 0) === 0) {
@@ -66,6 +82,7 @@ const ScheduleViewer = ({
     });
 
     const handleShareScheduleOpenDialog = () => {
+        setAnchorEl(null);
         setDialogOpen(true);
     };
 
@@ -79,8 +96,20 @@ const ScheduleViewer = ({
         handleShareScheduleOpenDialog();
     };
 
+    const handleExportAsImageClick = async () => {
+        setAnchorEl(null);
+        const weekNumber = getISOWeekNumberFromDate(currentDate);
+        exportComponentAsImage(
+            viewerComponentRef,
+            `schedule_st_zita_week${weekNumber}_${currentDate.toDateString()}`,
+            1920,
+            1080
+        );
+    };
+
     return (
         <Paper
+            ref={viewerComponentRef}
             style={{
                 userSelect: 'none', // Prevent text selection during drag
                 position: 'relative'
@@ -122,11 +151,24 @@ const ScheduleViewer = ({
                                 right: 20,
                                 color: theme.palette.primary.main
                             }}
-                            onClick={handleShareClick}
+                            onClick={handleMenuClick}
                         >
                             <IosShare />
                         </IconButton>
                     </Tooltip>
+                    <Menu
+                        id="long-menu"
+                        anchorEl={anchorEl}
+                        keepMounted
+                        open={Boolean(anchorEl)}
+                        onClose={handleMenuClose}
+                    >
+                        <MenuItem onClick={handleShareClick}>Share</MenuItem>
+
+                        <MenuItem onClick={handleExportAsImageClick}>
+                            Export as Image
+                        </MenuItem>
+                    </Menu>
                     <ShareAppointmentDialog
                         open={dialogOpen}
                         onRemove={handleShareScheduleCloseDialog}

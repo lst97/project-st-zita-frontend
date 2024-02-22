@@ -1,3 +1,9 @@
+/**
+ * Calculates the ISO week number from a given date.
+ *
+ * @param date - The date for which to calculate the week number.
+ * @returns The ISO week number.
+ */
 export function getISOWeekNumberFromDate(date: Date): number {
     // Create a new date object for the target date
     const target = new Date(date.valueOf());
