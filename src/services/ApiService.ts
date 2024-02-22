@@ -172,9 +172,10 @@ export class StaffApiService extends ApiResultIndicator {
     ) {
         const createStaffForm = new CreateStaffForm({
             staffName: staff.name,
-            email: staff.email,
+            email: staff.email === '' ? undefined : staff.email,
             color: staff.color,
-            phoneNumber: staff.phoneNumber
+            phoneNumber:
+                staff.phoneNumber === '' ? undefined : staff.phoneNumber
         });
 
         try {

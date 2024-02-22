@@ -61,7 +61,7 @@ const StaffCard = ({
                 <StyledCardContent>
                     <Typography variant="h6">{data.name}</Typography>
                     <Typography variant="body2" color="textSecondary">
-                        {data.description}
+                        {data.totalHours}
                     </Typography>
                 </StyledCardContent>
                 {isSelected && <StyledCheckIcon />}
