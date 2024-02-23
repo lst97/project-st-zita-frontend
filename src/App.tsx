@@ -6,13 +6,11 @@ import { SnackbarProvider } from './context/SnackbarContext';
 import AppSnackbar from './components/common/Snackbar';
 import { LoadingIndicatorProvider } from './context/LoadingIndicatorContext';
 import ApiResultIndicator from './components/common/indicators/ApiResultIndicator';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const App: React.FC = () => {
     useJwtInterceptor();
     return (
         <SnackbarProvider>
-            <SpeedInsights />
             <LoadingIndicatorProvider>
                 <AppSnackbar />
                 <ApiResultIndicator />

@@ -30,6 +30,7 @@ import { AccessTokenService } from '../../../services/TokenService';
 import React from 'react';
 import { exportComponentAsImage } from '../../../utils/ImageUtils';
 import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
+import ExportAsExcelDialog from './ExportAsExcelDialog';
 
 const handleDeleteAppointment = () => {
     console.log('handleDeleteAppointment');
@@ -51,7 +52,10 @@ const ScheduleViewer = ({
     onDelete?: (appointment: StaffAppointment) => void;
 }) => {
     const theme = useTheme();
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
+    const [exportAsExcelDialogOpen, setExportAsExcelDialogOpen] =
+        useState(false);
+
     const appointments = new Map<string, StaffAppointment[]>();
     const viewerComponentRef = React.useRef<HTMLDivElement>(null);
 
@@ -83,11 +87,11 @@ const ScheduleViewer = ({
 
     const handleShareScheduleOpenDialog = () => {
         setAnchorEl(null);
-        setDialogOpen(true);
+        setShareLinkDialogOpen(true);
     };
 
     const handleShareScheduleCloseDialog = () => {
-        setDialogOpen(false);
+        setShareLinkDialogOpen(false);
     };
 
     let dxReactAppointments = Array.from(appointments.values()).flat();
@@ -105,6 +109,11 @@ const ScheduleViewer = ({
             1920,
             1080
         );
+    };
+
+    const handleExportAsExcelClick = async () => {
+        setAnchorEl(null);
+        setExportAsExcelDialogOpen(true);
     };
 
     return (
@@ -141,41 +150,53 @@ const ScheduleViewer = ({
                     )}
                 />
             </Scheduler>
-            {AccessTokenService.getToken() && (
-                <React.Fragment>
-                    <Tooltip title="Share" arrow>
-                        <IconButton
-                            sx={{
-                                position: 'absolute',
-                                top: 10,
-                                right: 20,
-                                color: theme.palette.primary.main
-                            }}
-                            onClick={handleMenuClick}
-                        >
-                            <IosShare />
-                        </IconButton>
-                    </Tooltip>
-                    <Menu
-                        id="long-menu"
-                        anchorEl={anchorEl}
-                        keepMounted
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
-                    >
-                        <MenuItem onClick={handleShareClick}>Share</MenuItem>
 
-                        <MenuItem onClick={handleExportAsImageClick}>
-                            Export as Image
+            <React.Fragment>
+                <Tooltip title="Share" arrow>
+                    <IconButton
+                        sx={{
+                            position: 'absolute',
+                            top: 10,
+                            right: 20,
+                            color: theme.palette.primary.main
+                        }}
+                        onClick={handleMenuClick}
+                    >
+                        <IosShare />
+                    </IconButton>
+                </Tooltip>
+                <Menu
+                    id="long-menu"
+                    anchorEl={anchorEl}
+                    keepMounted
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                >
+                    {AccessTokenService.getToken() && (
+                        <MenuItem onClick={handleShareClick}>
+                            Share Link
                         </MenuItem>
-                    </Menu>
-                    <ShareAppointmentDialog
-                        open={dialogOpen}
-                        onRemove={handleShareScheduleCloseDialog}
-                        onDone={handleShareScheduleCloseDialog}
-                    />
-                </React.Fragment>
-            )}
+                    )}
+                    {AccessTokenService.getToken() && (
+                        <MenuItem onClick={handleExportAsExcelClick}>
+                            Export as Excel
+                        </MenuItem>
+                    )}
+
+                    <MenuItem onClick={handleExportAsImageClick}>
+                        Export as Image
+                    </MenuItem>
+                </Menu>
+                <ShareAppointmentDialog
+                    open={shareLinkDialogOpen}
+                    onRemove={handleShareScheduleCloseDialog}
+                    onDone={handleShareScheduleCloseDialog}
+                />
+                <ExportAsExcelDialog
+                    open={exportAsExcelDialogOpen}
+                    onDone={() => setExportAsExcelDialogOpen(false)}
+                />
+            </React.Fragment>
         </Paper>
     );
 };

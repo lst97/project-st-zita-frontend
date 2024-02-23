@@ -1,4 +1,3 @@
-// AddStaffDialog.js
 import { useContext, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -34,7 +33,7 @@ const commonFlexColumnStyles = {
     alignItems: 'start'
 };
 
-const AddStaffDialog = ({
+const ShareAppointmentDialog = ({
     open,
     onRemove,
     onDone
@@ -223,4 +222,4 @@ const AddStaffDialog = ({
     );
 };
 
-export default AddStaffDialog;
+export default ShareAppointmentDialog;
