@@ -77,13 +77,13 @@ const ShareAppointmentDialog = ({
     const handleCopyLinkClick = async () => {
         setIsLoading(true);
 
-        const linkId = await AppointmentApiService.createShareAppointments(
+        const response = await AppointmentApiService.createShareAppointments(
             selectedPermission.toString()
         );
 
         setIsLoading(false);
 
-        const link = `${window.location.origin}/scheduler/share/${linkId}`;
+        const link = `${window.location.origin}/scheduler/share/${response.data}`;
         navigator.clipboard.writeText(link);
 
         showSnackbar('Link copied', 'success');
