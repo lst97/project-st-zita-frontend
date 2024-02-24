@@ -27,3 +27,16 @@ export function getISOWeekNumberFromDate(date: Date): number {
     // Return the week number
     return 1 + Math.floor(weekDiff);
 }
+
+/**
+ * Adds the specified number of days to the given date.
+ *
+ * @param date - The date to which the days should be added.
+ * @param days - The number of days to add.
+ * @returns The new date after adding the specified number of days.
+ */
+export function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}

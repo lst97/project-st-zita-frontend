@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     createStaff: `${API_BASE_URL}/staffs`,
     fetchAppointmentsData: `${API_BASE_URL}/appointments/week_view/{weekViewId}`,
     fetchAppointmentsDataByLinkId: `${API_BASE_URL}/shared_appointments/{linkId}?weekViewId={weekViewId}`,
+    fetchAppointmentsExcelFile: `${API_BASE_URL}/appointments/export/excel`,
     createAppointments: `${API_BASE_URL}/appointments`,
     createShareAppointmentsLink: `${API_BASE_URL}/appointments/share`,
     deleteAppointmentsByWeekViewIdAndStaffName: `${API_BASE_URL}/appointments/week_view/{weekViewId}?staffName={staffName}`,

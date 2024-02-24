@@ -5,7 +5,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
-import { addDays, endOfWeek, startOfWeek } from 'date-fns';
+import { addDays, endOfWeek, set, startOfWeek } from 'date-fns';
 
 import FormGroup from '@mui/material/FormGroup';
 import {
@@ -22,8 +22,13 @@ import {
 } from '@mui/material';
 import { SettingsOutlined } from '@mui/icons-material';
 import { SnackbarContext } from '../../../context/SnackbarContext';
-import { DateRangePicker, RangeKeyDict } from 'react-date-range';
+import { DateRangePicker, Preview, RangeKeyDict } from 'react-date-range';
 import { useTheme } from '@mui/material';
+import { ExportAsExcelForm } from '../../../models/forms/scheduler/ExportAsExcelForm';
+import { AppointmentApiService } from '../../../services/ApiService';
+import { da } from 'date-fns/locale';
+import { color } from 'html2canvas/dist/types/css/types/color';
+import { AxiosHeaders } from 'axios';
 
 const commonFlexColumnStyles = {
     display: 'flex',
@@ -63,12 +68,49 @@ const ExportAsExcelDialog = ({
         }
     ]);
 
+    const [previewDateRangeState, setPreviewDateRangeState] = useState<Range[]>(
+        [
+            {
+                startDate: startOfWeek(new Date(), { weekStartsOn: 0 }), // Sunday as start of week
+                endDate: addDays(endOfWeek(new Date(), { weekStartsOn: 0 }), 0), // Sat as end of week
+                key: 'selection'
+            }
+        ]
+    );
+
+    const [showPreviewState, setShowPreviewState] = useState<boolean>(false);
+
     const handleDateRangeChange = (item: RangeKeyDict) => {
-        console.log('item', item);
         setDateRangeState([
             {
-                ...item.selection,
-                startDate: item.selection.startDate ?? new Date(),
+                startDate: startOfWeek(
+                    new Date(item.selection.startDate ?? new Date()),
+                    { weekStartsOn: 0 }
+                ), // Sunday as start of week
+                endDate: addDays(
+                    endOfWeek(
+                        new Date(item.selection.startDate ?? new Date()),
+                        { weekStartsOn: 0 }
+                    ),
+                    0
+                ), // Sat as end of week
+                key: 'selection'
+            }
+        ]);
+    };
+
+    const handleOnPreviewChange = (date: Date | Preview | undefined) => {
+        if (!(date instanceof Date)) {
+            setShowPreviewState(false);
+            return;
+        }
+
+        setShowPreviewState(true);
+
+        setPreviewDateRangeState([
+            {
+                startDate: startOfWeek(date, { weekStartsOn: 0 }), // Sunday as start of week
+                endDate: addDays(endOfWeek(date, { weekStartsOn: 0 }), 0), // Sat as end of week
                 key: 'selection'
             }
         ]);
@@ -78,13 +120,43 @@ const ExportAsExcelDialog = ({
         setExportFormat(event.target.value as 'weekly' | 'monthly' | 'yearly');
     };
 
-    const handleExportClick = () => {
+    const handleExportClick = async () => {
         setIsLoading(true);
-        setTimeout(() => {
+        // send api request and wait for the response
+        // add one day to start date
+
+        const response = await AppointmentApiService.exportAsExcel(
+            addDays(dateRangeState[0].startDate!, 1),
+            dateRangeState[0].endDate!,
+            exportFormat
+        );
+
+        if (!response) {
             setIsLoading(false);
-            showSnackbar('Exported successfully', 'success');
-            onDone();
-        }, 2000);
+            showSnackbar('Export failed', 'error');
+            return;
+        }
+
+        const decodedArrayBuffer = Uint8Array.from(
+            atob(response.data.buffer || ''),
+            (c) => c.charCodeAt(0)
+        );
+
+        const blob = new Blob([decodedArrayBuffer], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheet.sheet'
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        link.download = response.data.fileName ?? 'schedule.xlsx';
+
+        link.click();
+
+        setIsLoading(false);
+        showSnackbar('Exported successfully', 'success');
+        onDone();
     };
 
     return (
@@ -126,8 +198,13 @@ const ExportAsExcelDialog = ({
                                 sx={{ p: 2, m: 3, borderRadius: 1 }}
                             >
                                 <DateRangePicker
+                                    showMonthAndYearPickers={false}
+                                    showPreview={showPreviewState}
+                                    preview={previewDateRangeState[0]}
+                                    onPreviewChange={handleOnPreviewChange}
+                                    dragSelectionEnabled={false}
+                                    showDateDisplay={false}
                                     color={theme.palette.primary.main}
-                                    moveRangeOnFirstSelection={false}
                                     ranges={dateRangeState}
                                     onChange={handleDateRangeChange}
                                 />
@@ -178,12 +255,13 @@ const ExportAsExcelDialog = ({
                     variant="contained"
                     onClick={handleExportClick}
                     color="primary"
-                    sx={{ width: 100 }}
+                    sx={{ minWidth: 100 }}
+                    disabled={exportFormat !== 'weekly'}
                 >
                     {isLoading === true ? (
                         <CircularProgress size={24} color="inherit" />
                     ) : (
-                        <Typography>Export</Typography>
+                        <Typography>{`${exportFormat !== 'weekly' ? 'Unsupported' : 'Export'}`}</Typography>
                     )}
                 </Button>
             </DialogActions>

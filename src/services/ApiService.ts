@@ -362,7 +362,29 @@ export class AppointmentApiService extends ApiResultIndicator {
                 API_ENDPOINTS.createShareAppointmentsLink,
                 createShareLinkForm
             );
-            return response.data;
+            return response;
+        } catch (error) {
+            apiErrorHandler.handleError(error);
+            return null;
+        }
+    }
+
+    static async exportAsExcel(
+        fromDate: Date,
+        toDate: Date,
+        method: 'weekly' | 'monthly' | 'yearly'
+    ) {
+        try {
+            const response = await apiService.post(
+                API_ENDPOINTS.fetchAppointmentsExcelFile,
+                {
+                    fromDate: fromDate.toISOString(),
+                    toDate: toDate.toISOString(),
+                    method: method
+                }
+            );
+
+            return response;
         } catch (error) {
             apiErrorHandler.handleError(error);
             return null;
@@ -382,7 +404,7 @@ export class AuthApiService {
                 API_ENDPOINTS.signIn,
                 signInForm
             );
-            return response.data;
+            return response.response;
         } catch (error) {
             apiErrorHandler.handleError(error);
             return null;
