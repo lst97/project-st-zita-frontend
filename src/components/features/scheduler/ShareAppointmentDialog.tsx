@@ -17,8 +17,7 @@ import {
     MenuItem,
     Select,
     SelectChangeEvent,
-    Typography,
-    colors
+    Typography
 } from '@mui/material';
 import { Public, SettingsOutlined } from '@mui/icons-material';
 import { Permission, PermissionHelper } from '../../../utils/PermissionHelper';

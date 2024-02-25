@@ -404,7 +404,7 @@ export class AuthApiService {
                 API_ENDPOINTS.signIn,
                 signInForm
             );
-            return response;
+            return response.data;
         } catch (error) {
             apiErrorHandler.handleError(error);
             return null;
