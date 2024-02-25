@@ -10,6 +10,7 @@ import {
 } from '../services/ApiService';
 import { ColorUtils } from './ColorUtils';
 import { getISOWeekNumberFromDate } from './DateTimeUtils';
+import { opacity } from 'html2canvas/dist/types/css/property-descriptors/opacity';
 
 interface FetchAppointmentParams {
     linkId?: string;
@@ -158,7 +159,8 @@ export function groupContinuesTime(dates: Date[]): Date[][] {
 
 export function dateGroupToAppointments(
     staffName: string,
-    dateGroup: Date[][]
+    dateGroup: Date[][],
+    opacity?: number
 ): StaffAppointment[] {
     return dateGroup
         .map((group: Date[], index: number) => {
@@ -177,7 +179,8 @@ export function dateGroupToAppointments(
                 endDate,
                 index,
                 '',
-                ColorUtils.getColorFor(staffName)
+                ColorUtils.getColorFor(staffName),
+                opacity
             );
         })
         .filter((appointment) => appointment !== null) as StaffAppointment[];

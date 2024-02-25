@@ -36,6 +36,7 @@ const StaffScheduler = () => {
     const [selectedPlannerCells, setSelectedPlannerCells] = useState<Date[]>(
         []
     );
+    const [hoveredStaff, setHoveredStaff] = useState<string | null>(null);
 
     const [selectedScheduleMap, setSelectedScheduleMap] =
         useState<StaffScheduleMap>({});
@@ -88,6 +89,13 @@ const StaffScheduler = () => {
 
         // API call to add new staff
         StaffApiService.createStaff(newStaff, apiAuthErrorHandler);
+    };
+    const handleStaffCardHover = (staffCardContent: StaffCardContent) => {
+        setHoveredStaff(staffCardContent.name);
+    };
+
+    const handleStaffCardLeave = () => {
+        setHoveredStaff(null);
     };
 
     const handleStaffCardDelete = (staffCardContent: StaffCardContent) => {
@@ -248,6 +256,8 @@ const StaffScheduler = () => {
                                             <StaffCard
                                                 key={`assigned-staff-card-${staff.name}`}
                                                 onDelete={handleStaffCardDelete}
+                                                onHover={handleStaffCardHover}
+                                                onLeave={handleStaffCardLeave}
                                                 data={
                                                     new StaffCardContent({
                                                         name: staff.name,
@@ -321,10 +331,12 @@ const StaffScheduler = () => {
             <Grid xs={7}>
                 <ScheduleViewer
                     data={selectedScheduleMap}
+                    selectedStaffNames={selectedStaff ? [selectedStaff] : []}
                     currentDate={currentDate}
                     currentViewName={currentViewName}
                     onCurrentDateChange={onCurrentDateChange}
                     onCurrentViewNameChange={onCurrentViewNameChange}
+                    focusStaffName={hoveredStaff}
                     onDelete={() => {}}
                 />
             </Grid>

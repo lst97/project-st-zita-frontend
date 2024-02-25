@@ -25,7 +25,7 @@ import {
 } from '../../../utils/SchedulerHelpers';
 import { IosShare } from '@mui/icons-material';
 import ShareAppointmentDialog from './ShareAppointmentDialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AccessTokenService } from '../../../services/TokenService';
 import React from 'react';
 import { exportComponentAsImage } from '../../../utils/ImageUtils';
@@ -38,6 +38,8 @@ const handleDeleteAppointment = () => {
 
 const ScheduleViewer = ({
     data,
+    focusStaffName,
+    selectedStaffNames,
     currentDate,
     onCurrentDateChange,
     currentViewName,
@@ -45,6 +47,8 @@ const ScheduleViewer = ({
     onDelete
 }: {
     data: StaffScheduleMap;
+    focusStaffName?: string | null;
+    selectedStaffNames?: string[];
     currentDate: Date;
     onCurrentDateChange?: (date: Date) => void;
     currentViewName: string;
@@ -56,10 +60,16 @@ const ScheduleViewer = ({
     const [exportAsExcelDialogOpen, setExportAsExcelDialogOpen] =
         useState(false);
 
-    const appointments = new Map<string, StaffAppointment[]>();
+    const [appointments, setAppointments] = useState<
+        Map<string, StaffAppointment[]>
+    >(new Map());
+
     const viewerComponentRef = React.useRef<HTMLDivElement>(null);
 
     const [anchorEl, setAnchorEl] = useState(null);
+    const [dxReactAppointments, setDxReactAppointments] = useState<
+        StaffAppointment[]
+    >([]);
 
     const handleMenuClick = (event: any) => {
         // Open menu only if onDelete callback is provided
@@ -72,18 +82,96 @@ const ScheduleViewer = ({
         setAnchorEl(null);
     };
 
-    Object.entries(data).forEach(([staffName, selectedSchedule]) => {
-        if ((selectedSchedule?.schedule?.length ?? 0) === 0) {
-            return;
+    useEffect(() => {
+        setDxReactAppointments(Array.from(appointments.values()).flat());
+    }, [appointments]);
+
+    useEffect(() => {
+        const allAppointments = calculateAppointments(data);
+
+        let displayedAppointments;
+
+        if (selectedStaffNames && selectedStaffNames.length > 0) {
+            // Only display selected staff appointments
+            displayedAppointments = filterBySelectedStaff(
+                allAppointments,
+                selectedStaffNames
+            );
+            if (
+                focusStaffName &&
+                !selectedStaffNames.includes(focusStaffName)
+            ) {
+                console.log('TODO: add preview for focusStaffName');
+            }
+        } else if (focusStaffName) {
+            // all appointments are displayed, but focus staff is highlighted
+            displayedAppointments = adjustFocusStaffOpacity(
+                allAppointments,
+                focusStaffName
+            );
+        } else {
+            // not selected any staff nor focus staff
+            // display all appointments without any opacity adjustment
+            displayedAppointments = allAppointments;
         }
 
-        let sortedDateString = sortDates(selectedSchedule.schedule);
-        let groupedDates = groupContinuesTime(sortedDateString);
-        appointments.set(
-            staffName,
-            dateGroupToAppointments(staffName, groupedDates)
-        );
-    });
+        setAppointments(displayedAppointments);
+    }, [data, focusStaffName, selectedStaffNames]);
+
+    const calculateAppointments = (data: StaffScheduleMap) => {
+        const appointments = new Map<string, StaffAppointment[]>();
+
+        Object.entries(data).forEach(([staffName, selectedSchedule]) => {
+            if ((selectedSchedule?.schedule?.length ?? 0) === 0) {
+                return;
+            }
+
+            let sortedDateString = sortDates(selectedSchedule.schedule);
+            let groupedDates = groupContinuesTime(sortedDateString);
+
+            appointments.set(
+                staffName,
+                dateGroupToAppointments(staffName, groupedDates)
+            );
+        });
+
+        return appointments;
+    };
+
+    const filterBySelectedStaff = (
+        appointments: Map<string, StaffAppointment[]>,
+        selectedStaffNames: string[]
+    ) => {
+        const filteredAppointments = new Map<string, StaffAppointment[]>();
+
+        appointments.forEach((appointments, staffName) => {
+            if (selectedStaffNames.includes(staffName)) {
+                filteredAppointments.set(staffName, appointments);
+            }
+        });
+
+        return filteredAppointments;
+    };
+
+    const adjustFocusStaffOpacity = (
+        appointments: Map<string, StaffAppointment[]>,
+        focusStaffName: string
+    ) => {
+        const adjustedAppointments = new Map<string, StaffAppointment[]>();
+
+        appointments.forEach((appointments, staffName) => {
+            if (staffName !== focusStaffName) {
+                appointments.forEach((appointment) => {
+                    appointment.opacity = 0.1;
+                });
+                adjustedAppointments.set(staffName, appointments);
+            } else {
+                adjustedAppointments.set(staffName, appointments);
+            }
+        });
+
+        return adjustedAppointments;
+    };
 
     const handleShareScheduleOpenDialog = () => {
         setAnchorEl(null);
@@ -93,8 +181,6 @@ const ScheduleViewer = ({
     const handleShareScheduleCloseDialog = () => {
         setShareLinkDialogOpen(false);
     };
-
-    let dxReactAppointments = Array.from(appointments.values()).flat();
 
     const handleShareClick = async () => {
         handleShareScheduleOpenDialog();
