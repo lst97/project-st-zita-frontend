@@ -1,4 +1,4 @@
-import { NavigateFunction, useNavigate } from 'react-router-dom';
+import { NavigateFunction } from 'react-router-dom';
 import axios, { AxiosResponse } from 'axios';
 import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
 import { formatUrl } from '../utils/FormatterUtils';
@@ -13,6 +13,7 @@ import { SignInForm } from '../models/forms/auth/SignInForm';
 import { AccessTokenService } from './TokenService';
 import { CreateShareLinkForm } from '../models/forms/scheduler/CreateShareLinkForm';
 import { InvalidAppointmentShareLinkId } from '../models/errors/ApiErrors';
+import messageCodes from '../models/share/api/MessageCodes.json';
 
 export class ApiAuthenticationErrorHandler implements IApiErrorHandler {
     private navigate?: NavigateFunction;
@@ -171,9 +172,10 @@ export class StaffApiService extends ApiResultIndicator {
     ) {
         const createStaffForm = new CreateStaffForm({
             staffName: staff.name,
-            email: staff.email,
+            email: staff.email === '' ? undefined : staff.email,
             color: staff.color,
-            phoneNumber: staff.phoneNumber
+            phoneNumber:
+                staff.phoneNumber === '' ? undefined : staff.phoneNumber
         });
 
         try {
@@ -360,7 +362,29 @@ export class AppointmentApiService extends ApiResultIndicator {
                 API_ENDPOINTS.createShareAppointmentsLink,
                 createShareLinkForm
             );
-            return response.data;
+            return response;
+        } catch (error) {
+            apiErrorHandler.handleError(error);
+            return null;
+        }
+    }
+
+    static async exportAsExcel(
+        fromDate: Date,
+        toDate: Date,
+        method: 'weekly' | 'monthly' | 'yearly'
+    ) {
+        try {
+            const response = await apiService.post(
+                API_ENDPOINTS.fetchAppointmentsExcelFile,
+                {
+                    fromDate: fromDate.toISOString(),
+                    toDate: toDate.toISOString(),
+                    method: method
+                }
+            );
+
+            return response;
         } catch (error) {
             apiErrorHandler.handleError(error);
             return null;
@@ -385,6 +409,50 @@ export class AuthApiService {
             apiErrorHandler.handleError(error);
             return null;
         }
+    }
+}
+
+interface ResponseMessages {
+    [key: string]: {
+        [key: string]: ResponseMessage;
+    };
+}
+
+export class ResponseMessage {
+    Code: string;
+    Message: string;
+    StatusCode: number;
+
+    constructor(code: string, message: string, statusCode: number) {
+        this.Code = code;
+        this.Message = message;
+        this.StatusCode = statusCode;
+    }
+}
+
+export class MessageCodeService {
+    public readonly Messages: ResponseMessages = messageCodes;
+
+    public getResponseMessageByCode(code: string): ResponseMessage | undefined {
+        for (const category in this.Messages) {
+            if (Object.prototype.hasOwnProperty.call(this.Messages, category)) {
+                const responseMessages = this.Messages[category];
+                for (const key in responseMessages) {
+                    if (
+                        Object.prototype.hasOwnProperty.call(
+                            responseMessages,
+                            key
+                        )
+                    ) {
+                        const responseMessage = responseMessages[key];
+                        if (responseMessage.Code === code) {
+                            return responseMessage;
+                        }
+                    }
+                }
+            }
+        }
+        return undefined;
     }
 }
 

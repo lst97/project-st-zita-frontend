@@ -51,10 +51,12 @@ const StaffAccordion = ({
                 >
                     <Typography>{title}</Typography>
 
-                    {totalCount && (
+                    {totalCount !== undefined ? (
                         <Typography>
                             {React.Children.count(children)} / {totalCount}
                         </Typography>
+                    ) : (
+                        <Typography>0 / 0</Typography>
                     )}
                 </Grid>
             </AccordionSummary>

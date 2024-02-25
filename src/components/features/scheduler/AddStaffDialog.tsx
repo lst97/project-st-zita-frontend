@@ -46,8 +46,6 @@ const AddStaffDialog = ({
             return;
         }
 
-        ColorUtils.setColorFor(staffName, representColor);
-
         const newStaff: StaffData = {
             id: uuidv4(),
             name: staffName,

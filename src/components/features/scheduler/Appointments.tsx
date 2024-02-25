@@ -20,7 +20,8 @@ export const AppointmentContent = (
         <Appointments.AppointmentContent
             style={{
                 ...style,
-                backgroundColor: data.color
+                backgroundColor: data.color,
+                opacity: data.opacity
             }}
             {...props}
         />
@@ -41,7 +42,8 @@ export const Appointment = (
         <Appointments.Appointment
             style={{
                 ...style,
-                backgroundColor: data.color
+                backgroundColor: data.color,
+                opacity: data.opacity
             }}
             {...props}
         />

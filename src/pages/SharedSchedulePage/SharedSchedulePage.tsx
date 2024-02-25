@@ -18,7 +18,9 @@ const SharedSchedulePage = () => {
         useState<StaffScheduleMap>({});
 
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedStaff, setSelectedStaff] = useState<string | null>();
+    const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
+    const [hoveredStaff, setHoveredStaff] = useState<string | null>(null);
+
     const navigate = useNavigate();
 
     const onCurrentDateChange = (date: Date) => {
@@ -41,11 +43,21 @@ const SharedSchedulePage = () => {
     }, [currentDate]);
 
     const handleStaffCardClick = (name: string) => {
-        if (selectedStaff === name) {
-            setSelectedStaff(null);
-        } else {
-            setSelectedStaff(name);
-        }
+        setSelectedStaffs((prevStaffs) => {
+            if (prevStaffs && prevStaffs.includes(name)) {
+                return prevStaffs.filter((staff) => staff !== name);
+            } else {
+                return prevStaffs ? [...prevStaffs, name] : [name];
+            }
+        });
+    };
+
+    const handleOnHover = (staff: StaffCardContent) => {
+        setHoveredStaff(staff.name);
+    };
+
+    const handleOnLeave = () => {
+        setHoveredStaff(null);
     };
 
     return (
@@ -72,8 +84,10 @@ const SharedSchedulePage = () => {
                                         totalHours: totalHours
                                     })
                                 }
+                                onHover={handleOnHover}
+                                onLeave={handleOnLeave}
                                 onClick={() => handleStaffCardClick(staffName)}
-                                isSelected={selectedStaff === staffName}
+                                isSelected={selectedStaffs?.includes(staffName)}
                             />
                         ) : null; // If no matching staff data is found, render nothing
                     })}
@@ -81,6 +95,8 @@ const SharedSchedulePage = () => {
                 <Grid xs={8}>
                     <ScheduleViewer
                         data={selectedScheduleMap}
+                        focusStaffName={hoveredStaff}
+                        selectedStaffNames={selectedStaffs}
                         currentDate={currentDate}
                         onCurrentDateChange={onCurrentDateChange}
                         currentViewName={'Week'}

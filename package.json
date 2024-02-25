@@ -1,61 +1,76 @@
 {
-  "name": "project-st-zita-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@devexpress/dx-react-core": "^4.0.6",
-    "@devexpress/dx-react-scheduler": "^4.0.6",
-    "@devexpress/dx-react-scheduler-material-ui": "^4.0.6",
-    "@emotion/react": "^11.11.3",
-    "@emotion/styled": "^11.11.0",
-    "@mui/icons-material": "^5.15.6",
-    "@mui/lab": "^5.0.0-alpha.163",
-    "@mui/material": "^5.15.6",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.76",
-    "@types/react": "^18.2.48",
-    "@types/react-dom": "^18.2.18",
-    "axios": "^1.6.7",
-    "moment-timezone": "^0.5.44",
-    "mui-color-input": "^2.0.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.0",
-    "react-scripts": "5.0.1",
-    "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@types/uuid": "^9.0.8",
-    "prettier": "^3.2.4"
-  }
+    "name": "project-st-zita-frontend",
+    "version": "0.1.0",
+    "private": true,
+    "dependencies": {
+        "@devexpress/dx-react-core": "^4.0.8",
+        "@devexpress/dx-react-scheduler": "^4.0.8",
+        "@devexpress/dx-react-scheduler-material-ui": "^4.0.8",
+        "@emotion/react": "^11.11.3",
+        "@emotion/styled": "^11.11.0",
+        "@mui/icons-material": "^5.15.10",
+        "@mui/material": "^5.15.10",
+        "@testing-library/jest-dom": "^6.4.2",
+        "@testing-library/react": "^14.2.1",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/jest": "^29.5.12",
+        "@types/node": "^20.11.20",
+        "@types/react": "^18.2.58",
+        "@types/react-date-range": "^1.4.9",
+        "@types/react-dom": "^18.2.19",
+        "@vercel/speed-insights": "^1.0.10",
+        "axios": "^1.6.7",
+        "date-fns": "^3.3.1",
+        "html2canvas": "^1.4.1",
+        "moment": "^2.30.1",
+        "moment-timezone": "^0.5.45",
+        "mui-color-input": "^2.0.3",
+        "react": "^18.2.0",
+        "react-addons-shallow-compare": "^15.6.3",
+        "react-date-range": "^2.0.0-alpha.4",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.22.1",
+        "react-scripts": "5.0.1",
+        "typescript": "^5.3.3",
+        "web-vitals": "^3.5.2"
+    },
+    "overrides": {
+        "react-scripts": {
+            "typescript": "^5.3.3"
+        },
+        "@devexpress/dx-react-scheduler-material-ui": {
+            "@mui/x-date-pickers": "^6.19.4"
+        }
+    },
+    "scripts": {
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test",
+        "eject": "react-scripts eject",
+        "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write"
+    },
+    "eslintConfig": {
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ]
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    },
+    "devDependencies": {
+        "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+        "@types/uuid": "^9.0.8",
+        "fork-ts-checker-webpack-plugin": "^9.0.2",
+        "prettier": "^3.2.5"
+    }
 }

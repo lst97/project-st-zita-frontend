@@ -18,11 +18,15 @@ import { ColorUtils } from '../../../utils/ColorUtils';
 const StaffCard = ({
     onClick,
     onDelete,
+    onHover,
+    onLeave,
     data,
     isSelected
 }: {
     onClick: () => void;
-    onDelete?: (staff: StaffCardContent) => void | null;
+    onDelete?: (staff: StaffCardContent) => void;
+    onHover?: (staff: StaffCardContent) => void;
+    onLeave?: () => void;
     isSelected: boolean;
     data: StaffCardContent;
 }) => {
@@ -46,8 +50,18 @@ const StaffCard = ({
         }
     };
 
+    const handleOnHover = () => {
+        if (onHover) {
+            onHover(data);
+        }
+    };
+
     return (
-        <StyledCard isSelected={isSelected}>
+        <StyledCard
+            isSelected={isSelected}
+            onMouseEnter={handleOnHover}
+            onMouseLeave={onLeave}
+        >
             <CardActionArea
                 style={{ display: 'flex', width: '100%' }}
                 onClick={onClick}
@@ -61,7 +75,7 @@ const StaffCard = ({
                 <StyledCardContent>
                     <Typography variant="h6">{data.name}</Typography>
                     <Typography variant="body2" color="textSecondary">
-                        {data.description}
+                        {data.totalHours}
                     </Typography>
                 </StyledCardContent>
                 {isSelected && <StyledCheckIcon />}

@@ -1,4 +1,3 @@
-// AddStaffDialog.js
 import { useContext, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -18,8 +17,7 @@ import {
     MenuItem,
     Select,
     SelectChangeEvent,
-    Typography,
-    colors
+    Typography
 } from '@mui/material';
 import { Public, SettingsOutlined } from '@mui/icons-material';
 import { Permission, PermissionHelper } from '../../../utils/PermissionHelper';
@@ -34,7 +32,7 @@ const commonFlexColumnStyles = {
     alignItems: 'start'
 };
 
-const AddStaffDialog = ({
+const ShareAppointmentDialog = ({
     open,
     onRemove,
     onDone
@@ -78,13 +76,13 @@ const AddStaffDialog = ({
     const handleCopyLinkClick = async () => {
         setIsLoading(true);
 
-        const linkId = await AppointmentApiService.createShareAppointments(
+        const response = await AppointmentApiService.createShareAppointments(
             selectedPermission.toString()
         );
 
         setIsLoading(false);
 
-        const link = `${window.location.origin}/scheduler/share/${linkId}`;
+        const link = `${window.location.origin}/scheduler/share/${response.data}`;
         navigator.clipboard.writeText(link);
 
         showSnackbar('Link copied', 'success');
@@ -223,4 +221,4 @@ const AddStaffDialog = ({
     );
 };
 
-export default AddStaffDialog;
+export default ShareAppointmentDialog;

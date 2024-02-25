@@ -121,6 +121,14 @@ const SchedulePlaner = ({
 
     // Filter out invalid selected cells, incorrect time will be selected if the user dragged outside the schedule planner
     const filterInvalidSelectedCells = (selectedCells: Date[]): Date[] => {
+        // TODO: This is a temporary fix should find the root cause of the issue
+        // remove duplicate cells
+        const dateStrings = selectedCells.map((date) => date.toISOString());
+        const uniqueDateStrings = new Set(dateStrings);
+        selectedCells = Array.from(uniqueDateStrings).map(
+            (str) => new Date(str)
+        );
+
         return selectedCells.filter((cell) => {
             const date = cell;
             const minutes = date.getMinutes();
@@ -130,7 +138,7 @@ const SchedulePlaner = ({
     };
 
     const handleMouseUp = () => {
-        if (!isEnabled) return;
+        if (!isEnabled || isDragging === false) return;
 
         let year = currentDate.getFullYear();
         let weekNumber = getISOWeekNumberFromDate(currentDate);
