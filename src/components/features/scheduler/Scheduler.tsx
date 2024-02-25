@@ -32,7 +32,7 @@ import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContex
 const StaffScheduler = () => {
     const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
     const [selectedStaff, setSelectedStaff] = useState<string | null>();
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [addStaffDialogOpen, setAddStaffDialogOpen] = useState(false);
     const [selectedPlannerCells, setSelectedPlannerCells] = useState<Date[]>(
         []
     );
@@ -74,21 +74,36 @@ const StaffScheduler = () => {
     };
 
     const handleAddStaffOpenDialog = () => {
-        setDialogOpen(true);
+        setAddStaffDialogOpen(true);
     };
 
     const handleAddStaffCloseDialog = () => {
-        setDialogOpen(false);
+        setAddStaffDialogOpen(false);
     };
 
     const handleAddStaff = (newStaff: StaffData) => {
-        setStaffDataList((prevStaffDataList) => [
-            ...prevStaffDataList,
-            newStaff
-        ]);
+        if (
+            [...staffDataList].some(
+                (staff: StaffData) => staff.name === newStaff.name
+            )
+        ) {
+            showSnackbar(`Staff "${newStaff.name}" already exists`, 'error');
+            setSelectedStaff(newStaff.name);
+        } else {
+            // API call to add new staff
 
-        // API call to add new staff
-        StaffApiService.createStaff(newStaff, apiAuthErrorHandler);
+            StaffApiService.createStaff(newStaff, apiAuthErrorHandler)
+                .then(() => {
+                    setStaffDataList((prevStaffDataList) => [
+                        ...prevStaffDataList,
+                        newStaff
+                    ]);
+                    ColorUtils.setColorFor(newStaff.name, newStaff.color);
+                })
+                .catch((error) => {
+                    showSnackbar('Error when creating staff', 'error');
+                });
+        }
     };
     const handleStaffCardHover = (staffCardContent: StaffCardContent) => {
         setHoveredStaff(staffCardContent.name);
@@ -322,7 +337,7 @@ const StaffScheduler = () => {
                         </Grid>
                     </Grid>
                     <AddStaffDialog
-                        open={dialogOpen}
+                        open={addStaffDialogOpen}
                         onClose={handleAddStaffCloseDialog}
                         onAddStaff={handleAddStaff}
                     />
