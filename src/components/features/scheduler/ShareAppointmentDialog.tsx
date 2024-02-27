@@ -82,7 +82,7 @@ const ShareAppointmentDialog = ({
 
         setIsLoading(false);
 
-        const link = `${window.location.origin}/scheduler/share/${response.data}`;
+        const link = `${window.location.origin}/scheduler/share/${response?.data}`;
         navigator.clipboard.writeText(link);
 
         showSnackbar('Link copied', 'success');

@@ -12,8 +12,13 @@ import { CreateStaffForm } from '../models/forms/scheduler/CreateStaffForm';
 import { SignInForm } from '../models/forms/auth/SignInForm';
 import { AccessTokenService } from './TokenService';
 import { CreateShareLinkForm } from '../models/forms/scheduler/CreateShareLinkForm';
-import { InvalidAppointmentShareLinkId } from '../models/errors/ApiErrors';
+import {
+    InvalidApiResponseStructure,
+    InvalidAppointmentShareLinkId
+} from '../models/errors/ApiErrors';
 import messageCodes from '../models/share/api/MessageCodes.json';
+import { validateApiResponse } from '../utils/Validators';
+import BackendStandardResponse from '../models/share/api/response';
 
 export class ApiAuthenticationErrorHandler implements IApiErrorHandler {
     private navigate?: NavigateFunction;
@@ -60,6 +65,10 @@ export interface IApiErrorHandler {
 }
 class ApiErrorHandler implements IApiErrorHandler {
     public handleError(error: any): void {
+        if (error instanceof InvalidApiResponseStructure) {
+            console.log(error.message);
+            // Display a generic error message to the user
+        }
         // Centralized logic for handling all API errors
         if (error.response) {
             // The request was made and the server responded with a status code outside of the 2xx range
@@ -101,8 +110,10 @@ class ApiService {
 
     async get(url: string, config = {}) {
         try {
-            const response = await this._axiosInstance.get(url, config);
-            return response.data;
+            const response = validateApiResponse(
+                (await this._axiosInstance.get(url, config)).data
+            );
+            return response as BackendStandardResponse<any>;
         } catch (error) {
             throw error;
         }
@@ -110,8 +121,10 @@ class ApiService {
 
     async post(url: string, data: any, config = {}) {
         try {
-            const response = await this._axiosInstance.post(url, data, config);
-            return response.data;
+            const response = validateApiResponse(
+                (await this._axiosInstance.post(url, data, config)).data
+            );
+            return response as BackendStandardResponse<any>;
         } catch (error) {
             throw error;
         }
@@ -119,8 +132,11 @@ class ApiService {
 
     async put(url: string, data: any, config = {}) {
         try {
-            const response = await this._axiosInstance.put(url, data, config);
-            return response.data;
+            const response = validateApiResponse(
+                (await this._axiosInstance.put(url, data, config)).data
+            );
+
+            return response as BackendStandardResponse<any>;
         } catch (error) {
             throw error;
         }
@@ -128,8 +144,10 @@ class ApiService {
 
     async delete(url: string, config = {}) {
         try {
-            const response = await this._axiosInstance.delete(url, config);
-            return response.data; // Note: Some DELETE operations might not return a body.
+            const response = validateApiResponse(
+                (await this._axiosInstance.delete(url, config)).data
+            );
+            return response as BackendStandardResponse<any>;
         } catch (error) {
             throw error;
         }
