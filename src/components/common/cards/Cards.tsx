@@ -17,6 +17,7 @@ import { ColorUtils } from '../../../utils/ColorUtils';
 
 const StaffCard = ({
     onClick,
+    onEdit,
     onDelete,
     onHover,
     onLeave,
@@ -24,6 +25,7 @@ const StaffCard = ({
     isSelected
 }: {
     onClick: () => void;
+    onEdit?: (staff: StaffCardContent) => void;
     onDelete?: (staff: StaffCardContent) => void;
     onHover?: (staff: StaffCardContent) => void;
     onLeave?: () => void;
@@ -53,6 +55,13 @@ const StaffCard = ({
     const handleOnHover = () => {
         if (onHover) {
             onHover(data);
+        }
+    };
+
+    const handleOnEdit = () => {
+        if (onEdit) {
+            onEdit(data);
+            setAnchorEl(null);
         }
     };
 
@@ -98,6 +107,7 @@ const StaffCard = ({
                         open={Boolean(anchorEl)}
                         onClose={handleMenuClose}
                     >
+                        <MenuItem onClick={handleOnEdit}>Edit</MenuItem>
                         <MenuItem onClick={handleDelete} sx={{ color: 'red' }}>
                             Delete
                         </MenuItem>

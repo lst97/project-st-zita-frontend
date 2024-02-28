@@ -5,7 +5,6 @@ import ScheduleViewer from './ScheduleViewer';
 import StaffAccordion from './StaffAccordion';
 import StaffCardContent from '../../../models/scheduler/StaffCardContent';
 import Grid from '@mui/material/Unstable_Grid2';
-import AddStaffDialog from './AddStaffDialog';
 import Button from '@mui/material/Button';
 import {
     SelectedSchedule,
@@ -15,7 +14,8 @@ import StaffData from '../../../models/share/scheduler/StaffData';
 import {
     StaffApiService,
     AppointmentApiService,
-    ApiAuthenticationErrorHandler
+    ApiAuthenticationErrorHandler,
+    CommonApiErrorHandler
 } from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
 import {
@@ -28,11 +28,16 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SnackbarContext } from '../../../context/SnackbarContext';
 import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContext';
+import { AddStaffDialog, EditStaffDialog } from './StaffDialog';
 
 const StaffScheduler = () => {
     const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
     const [selectedStaff, setSelectedStaff] = useState<string | null>();
     const [addStaffDialogOpen, setAddStaffDialogOpen] = useState(false);
+    const [editStaffDialogOpen, setEditStaffDialogOpen] = useState(false);
+    const [isDialogConfirmLoading, setIsDialogConfirmLoading] = useState(false);
+    const [selectedEditStaff, setSelectedEditStaff] =
+        useState<StaffData | null>(null);
     const [selectedPlannerCells, setSelectedPlannerCells] = useState<Date[]>(
         []
     );
@@ -49,9 +54,11 @@ const StaffScheduler = () => {
 
     const navigate = useNavigate();
 
+    const [commonApiErrorHandler] = useState(new CommonApiErrorHandler());
     const [apiAuthErrorHandler] = useState(new ApiAuthenticationErrorHandler());
     apiAuthErrorHandler.useNavigate(navigate);
     apiAuthErrorHandler.useSnackbar(showSnackbar);
+    commonApiErrorHandler.useSnackbar(showSnackbar);
     StaffApiService.useIndicator(showIndicator);
     AppointmentApiService.useIndicator(showIndicator);
 
@@ -81,7 +88,7 @@ const StaffScheduler = () => {
         setAddStaffDialogOpen(false);
     };
 
-    const handleAddStaff = (newStaff: StaffData) => {
+    const handleAddStaff = async (newStaff: StaffData) => {
         if (
             [...staffDataList].some(
                 (staff: StaffData) => staff.name === newStaff.name
@@ -90,19 +97,23 @@ const StaffScheduler = () => {
             showSnackbar(`Staff "${newStaff.name}" already exists`, 'error');
             setSelectedStaff(newStaff.name);
         } else {
+            setIsDialogConfirmLoading(true);
             // API call to add new staff
+            const createdStaff = (
+                await StaffApiService.createStaff(newStaff, apiAuthErrorHandler)
+            )?.data;
+            setIsDialogConfirmLoading(false);
 
-            StaffApiService.createStaff(newStaff, apiAuthErrorHandler)
-                .then(() => {
-                    setStaffDataList((prevStaffDataList) => [
-                        ...prevStaffDataList,
-                        newStaff
-                    ]);
-                    ColorUtils.setColorFor(newStaff.name, newStaff.color);
-                })
-                .catch((error) => {
-                    showSnackbar('Error when creating staff', 'error');
-                });
+            if (!createdStaff) {
+                showSnackbar('Failed to create staff', 'error');
+                return;
+            }
+
+            setStaffDataList((prevStaffDataList) => [
+                ...prevStaffDataList,
+                createdStaff
+            ]);
+            ColorUtils.setColorFor(createdStaff.name, createdStaff.color);
         }
     };
     const handleStaffCardHover = (staffCardContent: StaffCardContent) => {
@@ -133,6 +144,59 @@ const StaffScheduler = () => {
             const { [staffCardContent.name]: _, ...updatedMap } = prevMap;
             return updatedMap;
         });
+    };
+
+    const handleCardEdit = (staff: StaffCardContent) => {
+        // Edit staff dialog
+        setEditStaffDialogOpen(true);
+        const selectedStaffData = staffDataList.find(
+            (staffData) => staffData.name === staff.name
+        )!;
+        setSelectedEditStaff(selectedStaffData);
+    };
+
+    const handleEditStaff = (staffData: StaffData) => {
+        if (staffDataList.some((staff) => staff.name === staffData.name)) {
+            showSnackbar(`Staff "${staffData.name}" already exists`, 'error');
+            return;
+        }
+
+        // API call
+        setIsDialogConfirmLoading(true);
+        StaffApiService.updateStaff(
+            staffData,
+            apiAuthErrorHandler,
+            commonApiErrorHandler
+        )
+            .then(() => {
+                const updatedSelectedScheduleMap = { ...selectedScheduleMap };
+                const oldStaffName = selectedEditStaff?.name;
+
+                if (oldStaffName) {
+                    updatedSelectedScheduleMap[staffData.name] =
+                        updatedSelectedScheduleMap[oldStaffName];
+                    delete updatedSelectedScheduleMap[oldStaffName];
+                    setSelectedStaff(staffData.name);
+                }
+
+                setSelectedScheduleMap(updatedSelectedScheduleMap);
+
+                setStaffDataList((prevStaffDataList) => {
+                    const index = prevStaffDataList.findIndex(
+                        (staff) => staff.id === staffData.id
+                    );
+                    prevStaffDataList[index] = staffData;
+                    return prevStaffDataList;
+                });
+                ColorUtils.setColorFor(staffData.name, staffData.color);
+            })
+            .catch((error) => {
+                showSnackbar(error.message, 'error');
+            })
+            .finally(() => {
+                setIsDialogConfirmLoading(false);
+                setEditStaffDialogOpen(false);
+            });
     };
 
     // Function to handle the finish of the planner cells selection
@@ -173,11 +237,13 @@ const StaffScheduler = () => {
 
     // When user change the week view, fetch the new schedule data
     useEffect(() => {
-        fetchAppointmentWeekViewData({
-            currentDate: currentDate,
-            apiErrorHandler: apiAuthErrorHandler,
-            onUpdate: setSelectedScheduleMap
-        });
+        fetchAppointmentWeekViewData(
+            {
+                currentDate: currentDate,
+                onUpdate: setSelectedScheduleMap
+            },
+            apiAuthErrorHandler
+        );
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentDate]);
@@ -271,6 +337,7 @@ const StaffScheduler = () => {
                                             <StaffCard
                                                 key={`assigned-staff-card-${staff.name}`}
                                                 onDelete={handleStaffCardDelete}
+                                                onEdit={handleCardEdit}
                                                 onHover={handleStaffCardHover}
                                                 onLeave={handleStaffCardLeave}
                                                 data={
@@ -314,6 +381,7 @@ const StaffScheduler = () => {
                                     .map((staff) => (
                                         <StaffCard
                                             key={`unassigned-staff-card-${staff.name}`}
+                                            onEdit={handleCardEdit}
                                             onDelete={handleStaffCardDelete}
                                             data={
                                                 new StaffCardContent({
@@ -340,6 +408,19 @@ const StaffScheduler = () => {
                         open={addStaffDialogOpen}
                         onClose={handleAddStaffCloseDialog}
                         onAddStaff={handleAddStaff}
+                        isLoading={isDialogConfirmLoading}
+                    />
+                    <EditStaffDialog
+                        open={editStaffDialogOpen}
+                        onClose={() => setEditStaffDialogOpen(false)}
+                        data={
+                            staffDataList.find(
+                                (staff) =>
+                                    staff.name === selectedEditStaff?.name
+                            )!
+                        }
+                        onEditStaff={handleEditStaff}
+                        isLoading={isDialogConfirmLoading}
                     />
                 </React.Fragment>
             </Grid>

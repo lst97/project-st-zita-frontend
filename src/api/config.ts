@@ -7,6 +7,7 @@ export const API_BASE_URL = `${process.env.API_PROTOCOL || 'http'}://${HOST}:${P
 export const API_ENDPOINTS = {
     fetchStaffsData: `${API_BASE_URL}/staffs`,
     createStaff: `${API_BASE_URL}/staffs`,
+    updateStaff: `${API_BASE_URL}/staffs/edit`,
     fetchAppointmentsData: `${API_BASE_URL}/appointments/week_view/{weekViewId}`,
     fetchAppointmentsDataByLinkId: `${API_BASE_URL}/shared_appointments/{linkId}?weekViewId={weekViewId}`,
     fetchAppointmentsExcelFile: `${API_BASE_URL}/appointments/export/excel`,

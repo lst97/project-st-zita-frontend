@@ -12,62 +12,66 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { StyledAvatar } from '../../common/cards/cards.style';
 import { ColorUtils } from '../../../utils/ColorUtils';
 import ColorPicker from '../../common/colors/ColorPicker';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import {
     SnackbarContext,
     SnackbarContextData
 } from '../../../context/SnackbarContext';
 
-const AddStaffDialog = ({
+const StaffDialog = ({
     open,
+    data,
     onClose,
-    onAddStaff
+    onConfirm,
+    isLoading
 }: {
     open: boolean;
+    data?: StaffData;
     onClose: () => void;
-    onAddStaff: (staffData: StaffData) => void;
+    onConfirm: (staffData: StaffData) => void;
+    isLoading?: boolean;
 }) => {
-    const [staffName, setStaffName] = useState('');
+    const [staffName, setStaffName] = useState(data?.name ?? '');
     const [staffDescription, setStaffDescription] = useState('');
     const [representColor, setRepresentColor] = useState(
-        ColorUtils.generateRandomColor()
+        data?.color ?? ColorUtils.generateRandomColor()
     );
-    const [email, setEmail] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const [email, setEmail] = useState(data?.email ?? '');
+    const [phoneNumber, setPhoneNumber] = useState(data?.phoneNumber ?? '');
     const { showSnackbar }: SnackbarContextData = useContext(SnackbarContext)!;
+
+    useEffect(() => {
+        setStaffName(data?.name ?? '');
+        setRepresentColor(data?.color ?? ColorUtils.generateRandomColor());
+        setEmail(data?.email ?? '');
+        setPhoneNumber(data?.phoneNumber ?? '');
+    }, [data]);
 
     const validator = (value: string) => {
         return value.length > 0;
     };
 
-    const handleAddClick = () => {
+    const handleOnConfirm = () => {
         if (!validator(staffName)) {
             showSnackbar('Staff name is required', 'error');
             return;
         }
 
-        const newStaff: StaffData = {
-            id: uuidv4(),
+        const staffData: StaffData = {
+            id: data?.id ?? uuidv4(),
             name: staffName,
-            email: email,
             color: representColor,
-            phoneNumber: phoneNumber,
-            image: 'NOT_IMPLEMENTED_YET'
+            email,
+            phoneNumber
         };
 
-        onAddStaff(newStaff);
+        onConfirm(staffData);
         onClose();
     };
 
-    useEffect(() => {
-        if (open) {
-            setRepresentColor(ColorUtils.generateRandomColor());
-        }
-    }, [open]);
-
     return (
         <Dialog open={open} onClose={onClose}>
-            <DialogTitle>Add New Staff</DialogTitle>
+            <DialogTitle>{`${data === undefined ? 'Add Staff' : 'Edit Staff'}`}</DialogTitle>
             <DialogContent>
                 <Grid container spacing={2}>
                     <Grid xs={4}>
@@ -137,12 +141,62 @@ const AddStaffDialog = ({
                 <Button onClick={onClose} color="primary">
                     Cancel
                 </Button>
-                <Button onClick={handleAddClick} color="primary">
-                    Add
+                <Button
+                    onClick={handleOnConfirm}
+                    color="primary"
+                    sx={{ minWidth: 80 }}
+                    variant={'contained'}
+                >
+                    {isLoading && <CircularProgress size={24} />}
+
+                    {isLoading ? null : data === undefined ? 'Add' : 'Edit'}
                 </Button>
             </DialogActions>
         </Dialog>
     );
 };
 
-export default AddStaffDialog;
+export const AddStaffDialog = ({
+    open,
+    onClose,
+    onAddStaff,
+    isLoading
+}: {
+    open: boolean;
+    onClose: () => void;
+    onAddStaff: (staffData: StaffData) => void;
+    isLoading?: boolean;
+}) => {
+    return (
+        <StaffDialog
+            open={open}
+            onClose={onClose}
+            onConfirm={onAddStaff}
+            isLoading={isLoading}
+        />
+    );
+};
+
+export const EditStaffDialog = ({
+    open,
+    data,
+    onClose,
+    onEditStaff,
+    isLoading
+}: {
+    open: boolean;
+    data: StaffData;
+    onClose: () => void;
+    onEditStaff: (staffData: StaffData) => void;
+    isLoading?: boolean;
+}) => {
+    return (
+        <StaffDialog
+            open={open}
+            data={data}
+            onClose={onClose}
+            onConfirm={onEditStaff}
+            isLoading={isLoading}
+        />
+    );
+};
