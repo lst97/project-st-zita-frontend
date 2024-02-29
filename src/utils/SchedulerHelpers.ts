@@ -10,12 +10,10 @@ import {
 } from '../services/ApiService';
 import { ColorUtils } from './ColorUtils';
 import { getISOWeekNumberFromDate } from './DateTimeUtils';
-import { opacity } from 'html2canvas/dist/types/css/property-descriptors/opacity';
 
 interface FetchAppointmentParams {
     linkId?: string;
     currentDate: Date;
-    apiErrorHandler?: IApiErrorHandler;
     onUpdate?: (data: StaffScheduleMap) => void;
 }
 
@@ -66,18 +64,21 @@ function populateScheduleForStaff(
 }
 
 export const fetchAppointmentWeekViewData = async (
-    params: FetchAppointmentParams
+    params: FetchAppointmentParams,
+    ...errorHandlers: IApiErrorHandler[]
 ) => {
     const weekNumber = getISOWeekNumberFromDate(params.currentDate);
     const year = params.currentDate.getFullYear();
     const weekViewId = calculateWeekViewId(params.currentDate);
 
     const appointmentsData =
-        await AppointmentApiService.fetchAppointmentsWeekViewData({
-            linkId: params.linkId,
-            id: weekViewId,
-            errorHandler: params.apiErrorHandler
-        });
+        await AppointmentApiService.fetchAppointmentsWeekViewData(
+            {
+                linkId: params.linkId,
+                id: weekViewId
+            },
+            ...errorHandlers
+        );
 
     const newSelectedScheduleMap = updateSelectedScheduleMap(
         appointmentsData,

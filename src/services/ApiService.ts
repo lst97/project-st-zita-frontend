@@ -8,13 +8,48 @@ import StaffData from '../models/share/scheduler/StaffData';
 import { SelectedSchedule } from '../models/scheduler/ScheduleModel';
 import { v4 as uuidv4 } from 'uuid';
 import { sortDates, groupContinuesTime } from '../utils/SchedulerHelpers';
-import { CreateStaffForm } from '../models/forms/scheduler/CreateStaffForm';
+import {
+    CreateStaffForm,
+    UpdateStaffForm
+} from '../models/forms/scheduler/StaffForms';
 import { SignInForm } from '../models/forms/auth/SignInForm';
 import { AccessTokenService } from './TokenService';
 import { CreateShareLinkForm } from '../models/forms/scheduler/CreateShareLinkForm';
-import { InvalidAppointmentShareLinkId } from '../models/errors/ApiErrors';
+import {
+    InvalidApiResponseStructure,
+    InvalidAppointmentShareLinkId
+} from '../models/errors/ApiErrors';
 import messageCodes from '../models/share/api/MessageCodes.json';
+import { validateApiResponse } from '../utils/Validators';
+import BackendStandardResponse from '../models/share/api/response';
+import {
+    RegistrationForm,
+    RegistrationFormParams
+} from '../models/forms/auth/RegistrationForm';
 
+export class CommonApiErrorHandler implements IApiErrorHandler {
+    private showSnackbar?: (message: string, severity: 'error') => void;
+
+    public handleError(error: any): void {
+        if (error.response) {
+            this.handleServerError(error.response);
+        }
+    }
+
+    public useSnackbar(
+        showSnackbar: (message: string, severity: 'error') => void
+    ) {
+        this.showSnackbar = showSnackbar;
+    }
+
+    private handleServerError(response: AxiosResponse) {
+        const structuredResponse =
+            response.data as BackendStandardResponse<any>;
+        if (response.status >= 400) {
+            this.showSnackbar!(structuredResponse.message.message, 'error');
+        }
+    }
+}
 export class ApiAuthenticationErrorHandler implements IApiErrorHandler {
     private navigate?: NavigateFunction;
     private showSnackbar?: (message: string, severity: 'error') => void;
@@ -58,8 +93,12 @@ export class ApiAuthenticationErrorHandler implements IApiErrorHandler {
 export interface IApiErrorHandler {
     handleError(error: any): void;
 }
-class ApiErrorHandler implements IApiErrorHandler {
+class DefaultApiErrorHandler implements IApiErrorHandler {
     public handleError(error: any): void {
+        if (error instanceof InvalidApiResponseStructure) {
+            console.log(error.message);
+            // Display a generic error message to the user
+        }
         // Centralized logic for handling all API errors
         if (error.response) {
             // The request was made and the server responded with a status code outside of the 2xx range
@@ -101,8 +140,10 @@ class ApiService {
 
     async get(url: string, config = {}) {
         try {
-            const response = await this._axiosInstance.get(url, config);
-            return response.data;
+            const response = validateApiResponse(
+                (await this._axiosInstance.get(url, config)).data
+            );
+            return response as BackendStandardResponse<any>;
         } catch (error) {
             throw error;
         }
@@ -110,8 +151,10 @@ class ApiService {
 
     async post(url: string, data: any, config = {}) {
         try {
-            const response = await this._axiosInstance.post(url, data, config);
-            return response.data;
+            const response = validateApiResponse(
+                (await this._axiosInstance.post(url, data, config)).data
+            );
+            return response as BackendStandardResponse<any>;
         } catch (error) {
             throw error;
         }
@@ -119,8 +162,11 @@ class ApiService {
 
     async put(url: string, data: any, config = {}) {
         try {
-            const response = await this._axiosInstance.put(url, data, config);
-            return response.data;
+            const response = validateApiResponse(
+                (await this._axiosInstance.put(url, data, config)).data
+            );
+
+            return response as BackendStandardResponse<any>;
         } catch (error) {
             throw error;
         }
@@ -128,8 +174,10 @@ class ApiService {
 
     async delete(url: string, config = {}) {
         try {
-            const response = await this._axiosInstance.delete(url, config);
-            return response.data; // Note: Some DELETE operations might not return a body.
+            const response = validateApiResponse(
+                (await this._axiosInstance.delete(url, config)).data
+            );
+            return response as BackendStandardResponse<any>;
         } catch (error) {
             throw error;
         }
@@ -137,7 +185,7 @@ class ApiService {
 }
 
 const apiService = new ApiService();
-const apiErrorHandler = new ApiErrorHandler();
+const defaultApiErrorHandler = new DefaultApiErrorHandler();
 
 class ApiResultIndicator {
     public static showIndicator?: (
@@ -152,7 +200,7 @@ class ApiResultIndicator {
     }
 }
 export class StaffApiService extends ApiResultIndicator {
-    static async fetchStaffData(errorHandler?: IApiErrorHandler) {
+    static async fetchStaffData(...errorHandlers: IApiErrorHandler[]) {
         try {
             const response = await apiService.get(
                 API_ENDPOINTS.fetchStaffsData
@@ -160,15 +208,17 @@ export class StaffApiService extends ApiResultIndicator {
 
             return response.data as StaffData[];
         } catch (error) {
-            apiErrorHandler.handleError(error);
-            errorHandler?.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
             return [];
         }
     }
 
     static async createStaff(
         staff: StaffData,
-        errorHandler?: IApiErrorHandler
+        ...errorHandlers: IApiErrorHandler[]
     ) {
         const createStaffForm = new CreateStaffForm({
             staffName: staff.name,
@@ -183,7 +233,53 @@ export class StaffApiService extends ApiResultIndicator {
                 this.showIndicator(true, false);
             }
 
-            await apiService.post(API_ENDPOINTS.createStaff, createStaffForm);
+            const response = await apiService.post(
+                API_ENDPOINTS.createStaff,
+                createStaffForm
+            );
+
+            if (this.showIndicator) {
+                this.showIndicator(false, true);
+            }
+
+            return response as BackendStandardResponse<StaffData>;
+        } catch (error) {
+            if (this.showIndicator) {
+                this.showIndicator(false, false);
+            }
+
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
+            return null;
+        }
+    }
+
+    static async updateStaff(
+        staffData: StaffData,
+        ...errorHandlers: IApiErrorHandler[]
+    ) {
+        const updateStaffForm = new UpdateStaffForm(staffData.id, {
+            staffName: staffData.name,
+            image: staffData.image === '' ? undefined : staffData.image,
+            color: staffData.color,
+            email: staffData.email === '' ? undefined : staffData.email,
+            phoneNumber:
+                staffData.phoneNumber === '' ? undefined : staffData.phoneNumber
+        });
+
+        try {
+            if (this.showIndicator) {
+                this.showIndicator(true, false);
+            }
+
+            await apiService.put(
+                formatUrl(API_ENDPOINTS.updateStaff, {
+                    staffName: staffData.name
+                }),
+                updateStaffForm
+            );
 
             if (this.showIndicator) {
                 this.showIndicator(false, true);
@@ -193,15 +289,18 @@ export class StaffApiService extends ApiResultIndicator {
                 this.showIndicator(false, false);
             }
 
-            apiErrorHandler.handleError(error);
-            errorHandler?.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
+
             return null;
         }
     }
 
     static async deleteStaff(
         staffName: string,
-        errorHandler?: IApiErrorHandler
+        ...errorHandlers: IApiErrorHandler[]
     ) {
         try {
             if (this.showIndicator) {
@@ -223,22 +322,26 @@ export class StaffApiService extends ApiResultIndicator {
                 this.showIndicator(false, false);
             }
 
-            apiErrorHandler.handleError(error);
-            errorHandler?.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
+
             return false;
         }
     }
 }
 export class AppointmentApiService extends ApiResultIndicator {
-    static async fetchAppointmentsWeekViewData({
-        id,
-        linkId,
-        errorHandler
-    }: {
-        id: string;
-        linkId?: string;
-        errorHandler?: IApiErrorHandler;
-    }): Promise<AppointmentData[]> {
+    static async fetchAppointmentsWeekViewData(
+        {
+            id,
+            linkId
+        }: {
+            id: string;
+            linkId?: string;
+        },
+        ...errorHandlers: IApiErrorHandler[]
+    ): Promise<AppointmentData[]> {
         try {
             let url;
             if (linkId) {
@@ -262,8 +365,12 @@ export class AppointmentApiService extends ApiResultIndicator {
             if (error instanceof InvalidAppointmentShareLinkId) {
                 throw error;
             }
-            apiErrorHandler.handleError(error);
-            errorHandler?.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+            if (Array.isArray(errorHandlers)) {
+                for (const errorHandler of errorHandlers) {
+                    errorHandler.handleError(error);
+                }
+            }
             return [];
         }
     }
@@ -272,7 +379,7 @@ export class AppointmentApiService extends ApiResultIndicator {
         staffName: string,
         weekViewId: string,
         selectedSchedule: SelectedSchedule,
-        errorHandler?: IApiErrorHandler
+        ...errorHandlers: IApiErrorHandler[]
     ) {
         try {
             if (this.showIndicator) {
@@ -301,8 +408,11 @@ export class AppointmentApiService extends ApiResultIndicator {
             if (this.showIndicator) {
                 this.showIndicator(false, false);
             }
-            apiErrorHandler.handleError(error);
-            errorHandler?.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
             return false;
         }
     }
@@ -311,7 +421,7 @@ export class AppointmentApiService extends ApiResultIndicator {
         staffName: string,
         weekViewId: string,
         selectedSchedule: SelectedSchedule,
-        errorHandler?: IApiErrorHandler
+        ...errorHandlers: IApiErrorHandler[]
     ) {
         const appointmentsData = [];
         if (selectedSchedule.schedule.length === 0) {
@@ -324,7 +434,7 @@ export class AppointmentApiService extends ApiResultIndicator {
         for (const group of groupedDates) {
             const appointmentData = new AppointmentData({
                 staffName: staffName,
-                groupId: uuidv4(),
+                groupId: uuidv4(), //TODO: should be handled by the backend
                 weekViewId: weekViewId,
                 startDate: group[0].toISOString(),
                 endDate: group[group.length - 1].toISOString()
@@ -340,8 +450,10 @@ export class AppointmentApiService extends ApiResultIndicator {
 
             return true;
         } catch (error) {
-            apiErrorHandler.handleError(error);
-            errorHandler?.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
             return false;
         }
     }
@@ -349,7 +461,8 @@ export class AppointmentApiService extends ApiResultIndicator {
     static async createShareAppointments(
         permission: string,
         weekViewIds?: string[],
-        expiry?: string
+        expiry?: string,
+        ...errorHandlers: IApiErrorHandler[]
     ) {
         const createShareLinkForm = new CreateShareLinkForm({
             permission: permission,
@@ -364,7 +477,10 @@ export class AppointmentApiService extends ApiResultIndicator {
             );
             return response;
         } catch (error) {
-            apiErrorHandler.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
             return null;
         }
     }
@@ -372,7 +488,8 @@ export class AppointmentApiService extends ApiResultIndicator {
     static async exportAsExcel(
         fromDate: Date,
         toDate: Date,
-        method: 'weekly' | 'monthly' | 'yearly'
+        method: 'weekly' | 'monthly' | 'yearly',
+        ...errorHandlers: IApiErrorHandler[]
     ) {
         try {
             const response = await apiService.post(
@@ -386,14 +503,21 @@ export class AppointmentApiService extends ApiResultIndicator {
 
             return response;
         } catch (error) {
-            apiErrorHandler.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
             return null;
         }
     }
 }
 
 export class AuthApiService {
-    static async signIn(email: string, password: string) {
+    static async signIn(
+        email: string,
+        password: string,
+        ...errorHandlers: IApiErrorHandler[]
+    ) {
         const signInForm = new SignInForm({
             email: email,
             password: password
@@ -406,7 +530,31 @@ export class AuthApiService {
             );
             return response.data;
         } catch (error) {
-            apiErrorHandler.handleError(error);
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
+            return null;
+        }
+    }
+
+    static async signUp(
+        params: RegistrationFormParams,
+        ...errorHandlers: IApiErrorHandler[]
+    ) {
+        const signUpForm = new RegistrationForm(params);
+
+        try {
+            const response = await apiService.post(
+                API_ENDPOINTS.register,
+                signUpForm
+            );
+            return response.data;
+        } catch (error) {
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
             return null;
         }
     }

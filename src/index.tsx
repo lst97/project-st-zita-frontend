@@ -6,6 +6,9 @@ import 'react-date-range/dist/theme/default.css'; // theme css file
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { ThemeProvider, createTheme } from '@mui/material';
+
+const defaultTheme = createTheme();
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
@@ -13,7 +16,9 @@ const root = ReactDOM.createRoot(
 root.render(
     <React.StrictMode>
         <SpeedInsights />
-        <App />
+        <ThemeProvider theme={defaultTheme}>
+            <App />
+        </ThemeProvider>
     </React.StrictMode>
 );
 
