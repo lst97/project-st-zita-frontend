@@ -22,6 +22,10 @@ import {
 import messageCodes from '../models/share/api/MessageCodes.json';
 import { validateApiResponse } from '../utils/Validators';
 import BackendStandardResponse from '../models/share/api/response';
+import {
+    RegistrationForm,
+    RegistrationFormParams
+} from '../models/forms/auth/RegistrationForm';
 
 export class CommonApiErrorHandler implements IApiErrorHandler {
     private showSnackbar?: (message: string, severity: 'error') => void;
@@ -430,7 +434,7 @@ export class AppointmentApiService extends ApiResultIndicator {
         for (const group of groupedDates) {
             const appointmentData = new AppointmentData({
                 staffName: staffName,
-                groupId: uuidv4(),
+                groupId: uuidv4(), //TODO: should be handled by the backend
                 weekViewId: weekViewId,
                 startDate: group[0].toISOString(),
                 endDate: group[group.length - 1].toISOString()
@@ -523,6 +527,27 @@ export class AuthApiService {
             const response = await apiService.post(
                 API_ENDPOINTS.signIn,
                 signInForm
+            );
+            return response.data;
+        } catch (error) {
+            defaultApiErrorHandler.handleError(error);
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
+            return null;
+        }
+    }
+
+    static async signUp(
+        params: RegistrationFormParams,
+        ...errorHandlers: IApiErrorHandler[]
+    ) {
+        const signUpForm = new RegistrationForm(params);
+
+        try {
+            const response = await apiService.post(
+                API_ENDPOINTS.register,
+                signUpForm
             );
             return response.data;
         } catch (error) {

@@ -1,5 +1,5 @@
 import { Routes as Router, Route, Navigate, Outlet } from 'react-router-dom';
-import SignInSide from './SignInPage/SignInPage';
+import SignInSide from './AuthPages/SignInPage';
 import HomePage from './HomePage/HomePage';
 import { AccessTokenService } from '../services/TokenService';
 import SharedSchedulePage from './SharedSchedulePage/SharedSchedulePage';
