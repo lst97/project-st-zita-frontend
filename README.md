@@ -1,3 +1,6 @@
+# Screen Shoot
+<img width="1459" alt="Screenshot 2024-02-29 at 18 30 55" src="https://github.com/lst97/project-st-zita-frontend/assets/16495912/7ed5d3f5-fe65-4354-9cfe-c6ed192ac564">
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
