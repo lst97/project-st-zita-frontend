@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MuiColorInput } from 'mui-color-input';
+import { MuiColorInput, MuiColorInputColors } from 'mui-color-input';
 import useTheme from '@mui/material/styles/useTheme';
 
 const ColorPicker = ({
@@ -18,12 +18,21 @@ const ColorPicker = ({
         setValue(initialColor ?? theme.palette.primary.main);
     }, [initialColor, theme.palette.primary.main]);
 
-    const handleColorChange = (newValue: string) => {
-        onChange(newValue);
-        setValue(newValue);
+    const handleColorChange = (
+        _newValue: string,
+        colors: MuiColorInputColors
+    ) => {
+        onChange(colors.hex);
+        setValue(colors.hex);
     };
 
-    return <MuiColorInput value={value} onChange={handleColorChange} />;
+    return (
+        <MuiColorInput
+            format="hex"
+            value={value}
+            onChange={handleColorChange}
+        />
+    );
 };
 
 export default ColorPicker;
