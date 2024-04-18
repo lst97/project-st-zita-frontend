@@ -9,15 +9,15 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import { passwordSchema } from '../../schemas/PasswordSchema';
 import { emailSchema } from '../../schemas/EmailSchema';
-import {
-    ApiAuthenticationErrorHandler,
-    AuthApiService,
-    CommonApiErrorHandler
-} from '../../services/ApiService';
+import { AuthApiService } from '../../services/ApiService';
 import { useContext, useState } from 'react';
 import { SnackbarContext } from '../../context/SnackbarContext';
 import { ColorUtils } from '../../utils/ColorUtils';
 import { CircularProgress } from '@mui/material';
+import {
+    ApiAuthenticationErrorHandler,
+    SnackbarApiErrorHandler
+} from '@lst97/common-restful';
 
 const passwordValidator = (password: string, confirmPassword: string) => {
     if (password !== confirmPassword) {
@@ -42,11 +42,11 @@ const emailValidator = (email: string) => {
 };
 
 export default function SignUp({ onFinish }: { onFinish: () => void }) {
-    const [commonApiErrorHandler] = useState(new CommonApiErrorHandler());
+    const [snackbarApiErrorHandler] = useState(new SnackbarApiErrorHandler());
     const [authApiErrorHandler] = useState(new ApiAuthenticationErrorHandler());
     const [isLoading, setIsLoading] = useState(false);
     const { showSnackbar } = useContext(SnackbarContext)!;
-    commonApiErrorHandler.useSnackbar(showSnackbar);
+    snackbarApiErrorHandler.useSnackbar(showSnackbar);
 
     const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -77,7 +77,7 @@ export default function SignUp({ onFinish }: { onFinish: () => void }) {
                 color: ColorUtils.generateRandomColor()
             },
             authApiErrorHandler,
-            commonApiErrorHandler
+            snackbarApiErrorHandler
         )
             .then((response) => {
                 if (response) {

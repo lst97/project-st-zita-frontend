@@ -1,13 +1,11 @@
+import { IApiErrorHandler } from '@lst97/common-restful';
 import {
     SelectedSchedule,
     StaffScheduleMap
 } from '../models/scheduler/ScheduleModel';
 import StaffAppointment from '../models/scheduler/StaffAppointment';
 import { AppointmentData } from '../models/share/scheduler/StaffAppointmentData';
-import {
-    AppointmentApiService,
-    IApiErrorHandler
-} from '../services/ApiService';
+import { AppointmentApiService } from '../services/ApiService';
 import { ColorUtils } from './ColorUtils';
 import { getISOWeekNumberFromDate } from './DateTimeUtils';
 

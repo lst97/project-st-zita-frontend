@@ -1,10 +1,6 @@
 import React from 'react';
-import {
-    AppointmentTooltip,
-    Appointments
-} from '@devexpress/dx-react-scheduler-material-ui';
+import { Appointments } from '@devexpress/dx-react-scheduler-material-ui';
 import { JSX } from 'react/jsx-runtime';
-import { IconButton } from '@mui/material';
 
 export const AppointmentContent = (
     props: JSX.IntrinsicAttributes &
@@ -46,29 +42,7 @@ export const Appointment = (
                 opacity: data.opacity
             }}
             {...props}
+            toggleVisibility={false}
         />
-    );
-};
-
-export const AppointmentHeader = (
-    props: JSX.IntrinsicAttributes &
-        AppointmentTooltip.HeaderProps & {
-            [x: string]: any;
-            className?: string | undefined;
-            style?: React.CSSProperties | undefined;
-        },
-    onDelete: () => void
-) => {
-    return (
-        <AppointmentTooltip.Header {...props}>
-            <IconButton
-                onClick={() => {
-                    console.log('AppointmentTooltip.Header - TODO');
-                }}
-            >
-                {' '}
-                TODO-DELETE
-            </IconButton>
-        </AppointmentTooltip.Header>
     );
 };

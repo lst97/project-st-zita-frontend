@@ -13,11 +13,7 @@ import {
 } from '@devexpress/dx-react-scheduler-material-ui';
 import { ViewState } from '@devexpress/dx-react-scheduler';
 import { StaffScheduleMap } from '../../../models/scheduler/ScheduleModel';
-import {
-    Appointment,
-    AppointmentContent,
-    AppointmentHeader
-} from './Appointments';
+import { Appointment, AppointmentContent } from './Appointments';
 import {
     dateGroupToAppointments,
     groupContinuesTime,
@@ -26,15 +22,12 @@ import {
 import { IosShare } from '@mui/icons-material';
 import ShareAppointmentDialog from './ShareAppointmentDialog';
 import { useEffect, useState } from 'react';
-import { AccessTokenService } from '../../../services/TokenService';
 import React from 'react';
 import { exportComponentAsImage } from '../../../utils/ImageUtils';
 import { getISOWeekNumberFromDate } from '../../../utils/DateTimeUtils';
 import ExportAsExcelDialog from './ExportAsExcelDialog';
-
-const handleDeleteAppointment = () => {
-    console.log('handleDeleteAppointment');
-};
+import DeleteIcon from '@mui/icons-material/Delete';
+import { ReactTokenServiceInstance } from '@lst97/common-services';
 
 const ScheduleViewer = ({
     data,
@@ -44,7 +37,9 @@ const ScheduleViewer = ({
     onCurrentDateChange,
     currentViewName,
     onCurrentViewNameChange,
-    onDelete
+    onDelete,
+    tooltipVisibility,
+    onTooltipVisibilityChange
 }: {
     data: StaffScheduleMap;
     focusStaffName?: string | null;
@@ -54,6 +49,8 @@ const ScheduleViewer = ({
     currentViewName: string;
     onCurrentViewNameChange?: (viewName: string) => void;
     onDelete?: (appointment: StaffAppointment) => void;
+    tooltipVisibility?: boolean;
+    onTooltipVisibilityChange?: (visibility: boolean) => void;
 }) => {
     const theme = useTheme();
     const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
@@ -80,6 +77,12 @@ const ScheduleViewer = ({
 
     const handleMenuClose = () => {
         setAnchorEl(null);
+    };
+
+    const handleDeleteAppointment = (appointment: StaffAppointment) => {
+        if (onDelete) {
+            onDelete(appointment);
+        }
     };
 
     useEffect(() => {
@@ -228,11 +231,25 @@ const ScheduleViewer = ({
                 <TodayButton />
 
                 <AppointmentTooltip
+                    visible={tooltipVisibility}
+                    onVisibilityChange={onTooltipVisibilityChange}
+                    showCloseButton={true}
                     headerComponent={(props) => (
-                        <AppointmentHeader
+                        <AppointmentTooltip.Header
+                            className="appointment-header"
                             {...props}
-                            onDelete={handleDeleteAppointment}
-                        />
+                        >
+                            <IconButton
+                                onClick={() => {
+                                    handleDeleteAppointment(
+                                        props.appointmentData as StaffAppointment
+                                    );
+                                    onTooltipVisibilityChange?.(false);
+                                }}
+                            >
+                                <DeleteIcon sx={{ margin: 0.5 }} />
+                            </IconButton>
+                        </AppointmentTooltip.Header>
                     )}
                 />
             </Scheduler>
@@ -258,12 +275,12 @@ const ScheduleViewer = ({
                     open={Boolean(anchorEl)}
                     onClose={handleMenuClose}
                 >
-                    {AccessTokenService.getToken() && (
+                    {ReactTokenServiceInstance().getToken('accessToken') && (
                         <MenuItem onClick={handleShareClick}>
                             Share Link
                         </MenuItem>
                     )}
-                    {AccessTokenService.getToken() && (
+                    {ReactTokenServiceInstance().getToken('accessToken') && (
                         <MenuItem onClick={handleExportAsExcelClick}>
                             Export as Excel
                         </MenuItem>

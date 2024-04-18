@@ -19,9 +19,8 @@ import {
     managerDrawerItems
 } from './DrawerItems';
 import Copyright from '../common/footers/Copyright';
-import { AccessTokenService } from '../../services/TokenService';
-import { useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ReactTokenServiceInstance } from '@lst97/common-services';
 
 const drawerWidth: number = 240;
 
@@ -96,13 +95,13 @@ export default function Dashboard({
 
     const handleLogoutClick = () => {
         console.log(location.pathname.split('/'));
-        AccessTokenService.removeToken();
+        ReactTokenServiceInstance().removeToken('accessToken');
         navigate('/signin', { replace: true });
     };
 
     return (
         <React.Fragment>
-            {AccessTokenService.getToken() != null ||
+            {ReactTokenServiceInstance().getToken('accessToken') != null ||
             location.pathname.split('/')[2] === 'share' ? (
                 <Box sx={{ display: 'flex' }}>
                     <CssBaseline />
@@ -133,7 +132,9 @@ export default function Dashboard({
                             >
                                 Dashboard
                             </Typography>
-                            {AccessTokenService.getToken() && (
+                            {ReactTokenServiceInstance().getToken(
+                                'accessToekn'
+                            ) && (
                                 <IconButton color="inherit">
                                     <Badge badgeContent={4} color="secondary">
                                         <NotificationsIcon />
@@ -160,7 +161,9 @@ export default function Dashboard({
                             component="nav"
                             sx={{ position: 'relative', height: '100%' }}
                         >
-                            {AccessTokenService.getToken() ? (
+                            {ReactTokenServiceInstance().getToken(
+                                'accessToken'
+                            ) ? (
                                 <React.Fragment>
                                     {managerDrawerItems(
                                         selectedTabIndex,

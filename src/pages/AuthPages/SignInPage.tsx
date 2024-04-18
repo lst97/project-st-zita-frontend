@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { AuthApiService } from '../../services/ApiService';
-import { AccessTokenService } from '../../services/TokenService';
+import { ReactTokenServiceInstance } from '@lst97/common-services';
 import CircularProgress from '@mui/material/CircularProgress';
 import { SnackbarContext } from '../../context/SnackbarContext';
 import React from 'react';
@@ -47,7 +47,12 @@ export default function SignInSide() {
         }
 
         setAuth(true);
-        AccessTokenService.setToken(jwtToken);
+
+        // Check if the token is valid before navigating if necessary
+        ReactTokenServiceInstance().addTokenKey(
+            'accessToken',
+            (_token) => true
+        );
         navigate('/');
     };
 

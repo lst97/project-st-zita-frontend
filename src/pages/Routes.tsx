@@ -1,8 +1,8 @@
 import { Routes as Router, Route, Navigate, Outlet } from 'react-router-dom';
 import SignInSide from './AuthPages/SignInPage';
 import HomePage from './HomePage/HomePage';
-import { AccessTokenService } from '../services/TokenService';
 import SharedSchedulePage from './SharedSchedulePage/SharedSchedulePage';
+import { ReactTokenServiceInstance } from '@lst97/common-services';
 
 type Props = {};
 
@@ -14,7 +14,7 @@ interface RouteObject {
 }
 
 const PrivateRoutes = () => {
-    if (!AccessTokenService.getToken())
+    if (!ReactTokenServiceInstance().getToken('accessToken'))
         return <Navigate to="/signin" replace />;
 
     return <Outlet />;

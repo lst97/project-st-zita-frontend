@@ -1,7 +1,3 @@
-import { NavigateFunction } from 'react-router-dom';
-import axios, { AxiosResponse } from 'axios';
-import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
-import { formatUrl } from '../utils/FormatterUtils';
 import { AppointmentData } from '../models/share/scheduler/StaffAppointmentData';
 import StaffData from '../models/share/scheduler/StaffData';
 
@@ -13,197 +9,29 @@ import {
     UpdateStaffForm
 } from '../models/forms/scheduler/StaffForms';
 import { SignInForm } from '../models/forms/auth/SignInForm';
-import { AccessTokenService } from './TokenService';
 import { CreateShareLinkForm } from '../models/forms/scheduler/CreateShareLinkForm';
-import {
-    InvalidApiResponseStructure,
-    InvalidAppointmentShareLinkId
-} from '../models/errors/ApiErrors';
+import { InvalidAppointmentShareLinkId } from '../models/errors/ApiErrors';
 import messageCodes from '../models/share/api/MessageCodes.json';
-import { validateApiResponse } from '../utils/Validators';
 import BackendStandardResponse from '../models/share/api/response';
 import {
     RegistrationForm,
     RegistrationFormParams
 } from '../models/forms/auth/RegistrationForm';
+import {
+    ApiResultIndicator,
+    ApiServiceInstance,
+    ConsoleLogApiErrorHandler,
+    IApiErrorHandler,
+    formatRoutes
+} from '@lst97/common-restful';
+import { ApiConfig } from '../api/config';
 
-export class CommonApiErrorHandler implements IApiErrorHandler {
-    private showSnackbar?: (message: string, severity: 'error') => void;
-
-    public handleError(error: any): void {
-        if (error.response) {
-            this.handleServerError(error.response);
-        }
-    }
-
-    public useSnackbar(
-        showSnackbar: (message: string, severity: 'error') => void
-    ) {
-        this.showSnackbar = showSnackbar;
-    }
-
-    private handleServerError(response: AxiosResponse) {
-        const structuredResponse =
-            response.data as BackendStandardResponse<any>;
-        if (response.status >= 400) {
-            this.showSnackbar!(structuredResponse.message.message, 'error');
-        }
-    }
-}
-export class ApiAuthenticationErrorHandler implements IApiErrorHandler {
-    private navigate?: NavigateFunction;
-    private showSnackbar?: (message: string, severity: 'error') => void;
-
-    public handleError(error: any): void {
-        if (error.response) {
-            this.handleServerError(error.response);
-        }
-    }
-
-    public useNavigate(navigate: NavigateFunction) {
-        this.navigate = navigate;
-    }
-
-    public useSnackbar(
-        showSnackbar: (message: string, severity: 'error') => void
-    ) {
-        this.showSnackbar = showSnackbar;
-    }
-
-    private handleServerError(response: AxiosResponse) {
-        switch (response.status) {
-            case 401:
-            case 403:
-                AccessTokenService.removeToken();
-                if (this.navigate) {
-                    this.navigate('/signin', { replace: true });
-                }
-
-                if (this.showSnackbar) {
-                    this.showSnackbar(
-                        'Session expired. Please sign in again',
-                        'error'
-                    );
-                }
-
-                break;
-        }
-    }
-}
-export interface IApiErrorHandler {
-    handleError(error: any): void;
-}
-class DefaultApiErrorHandler implements IApiErrorHandler {
-    public handleError(error: any): void {
-        if (error instanceof InvalidApiResponseStructure) {
-            console.log(error.message);
-            // Display a generic error message to the user
-        }
-        // Centralized logic for handling all API errors
-        if (error.response) {
-            // The request was made and the server responded with a status code outside of the 2xx range
-            this.handleServerError(error.response);
-        } else if (error.request) {
-            // The request was made but no response was received. Network issue, timeout, etc.
-            console.error('Network Error:', error.request);
-            // You might want to display a generic network error message to the user
-        } else {
-            // Something happened in setting up the request
-            console.error('Unexpected API Error:', error.message);
-        }
-    }
-
-    private handleServerError(response: AxiosResponse) {
-        switch (response.status) {
-            case 400:
-                console.error('Bad Request:', response.data);
-                // Handle specific 400 errors with user-friendly messages
-                break;
-            // ... other cases
-            default:
-                console.error('Generic Server Error:', response.data);
-        }
-    }
-}
-class ApiService {
-    private _axiosInstance;
-
-    constructor() {
-        this._axiosInstance = axios.create({
-            baseURL: `${API_BASE_URL}`
-        });
-    }
-
-    get AxiosInstance() {
-        return this._axiosInstance;
-    }
-
-    async get(url: string, config = {}) {
-        try {
-            const response = validateApiResponse(
-                (await this._axiosInstance.get(url, config)).data
-            );
-            return response as BackendStandardResponse<any>;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async post(url: string, data: any, config = {}) {
-        try {
-            const response = validateApiResponse(
-                (await this._axiosInstance.post(url, data, config)).data
-            );
-            return response as BackendStandardResponse<any>;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async put(url: string, data: any, config = {}) {
-        try {
-            const response = validateApiResponse(
-                (await this._axiosInstance.put(url, data, config)).data
-            );
-
-            return response as BackendStandardResponse<any>;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async delete(url: string, config = {}) {
-        try {
-            const response = validateApiResponse(
-                (await this._axiosInstance.delete(url, config)).data
-            );
-            return response as BackendStandardResponse<any>;
-        } catch (error) {
-            throw error;
-        }
-    }
-}
-
-const apiService = new ApiService();
-const defaultApiErrorHandler = new DefaultApiErrorHandler();
-
-class ApiResultIndicator {
-    public static showIndicator?: (
-        isLoading: boolean,
-        isSuccess: boolean
-    ) => void;
-
-    public static useIndicator(
-        showIndicator: (isLoading: boolean, isSuccess: boolean) => void
-    ) {
-        this.showIndicator = showIndicator;
-    }
-}
+const defaultApiErrorHandler = new ConsoleLogApiErrorHandler();
 export class StaffApiService extends ApiResultIndicator {
     static async fetchStaffData(...errorHandlers: IApiErrorHandler[]) {
         try {
-            const response = await apiService.get(
-                API_ENDPOINTS.fetchStaffsData
+            const response = await ApiServiceInstance().get(
+                ApiConfig.instance.routes.fetchStaffsData.toString()
             );
 
             return response.data as StaffData[];
@@ -233,8 +61,8 @@ export class StaffApiService extends ApiResultIndicator {
                 this.showIndicator(true, false);
             }
 
-            const response = await apiService.post(
-                API_ENDPOINTS.createStaff,
+            const response = await ApiServiceInstance().post(
+                ApiConfig.instance.routes.createStaff.toString(),
                 createStaffForm
             );
 
@@ -274,8 +102,8 @@ export class StaffApiService extends ApiResultIndicator {
                 this.showIndicator(true, false);
             }
 
-            await apiService.put(
-                formatUrl(API_ENDPOINTS.updateStaff, {
+            await ApiServiceInstance().put(
+                formatRoutes(ApiConfig.instance.routes.updateStaff.toString(), {
                     staffName: staffData.name
                 }),
                 updateStaffForm
@@ -307,10 +135,13 @@ export class StaffApiService extends ApiResultIndicator {
                 this.showIndicator(true, false);
             }
 
-            const url = formatUrl(API_ENDPOINTS.deleteStaff, {
-                staffName: staffName
-            });
-            await apiService.delete(url);
+            const url = formatRoutes(
+                ApiConfig.instance.routes.deleteStaff.toString(),
+                {
+                    staffName: staffName
+                }
+            );
+            await ApiServiceInstance().delete(url);
 
             if (this.showIndicator) {
                 this.showIndicator(false, true);
@@ -345,17 +176,23 @@ export class AppointmentApiService extends ApiResultIndicator {
         try {
             let url;
             if (linkId) {
-                url = formatUrl(API_ENDPOINTS.fetchAppointmentsDataByLinkId, {
-                    weekViewId: id,
-                    linkId: linkId
-                });
+                url = formatRoutes(
+                    ApiConfig.instance.routes.fetchAppointmentsDataByLinkId.toString(),
+                    {
+                        weekViewId: id,
+                        linkId: linkId
+                    }
+                );
             } else {
                 // not using weekViewId in the url as query param
-                url = formatUrl(API_ENDPOINTS.fetchAppointmentsData, {
-                    weekViewId: id
-                }).split('?')[0];
+                url = formatRoutes(
+                    ApiConfig.instance.routes.fetchAppointmentsData.toString(),
+                    {
+                        weekViewId: id
+                    }
+                ).split('?')[0];
             }
-            const response = await apiService.get(url);
+            const response = await ApiServiceInstance().get(url);
             if (!response.data) {
                 // invalid linkId
                 throw new InvalidAppointmentShareLinkId('Invalid linkId');
@@ -375,6 +212,44 @@ export class AppointmentApiService extends ApiResultIndicator {
         }
     }
 
+    static async deleteAppointmentByDateAndStaffName(
+        staffName: string,
+        startDate: Date,
+        endDate: Date,
+        ...errorHandlers: IApiErrorHandler[]
+    ) {
+        try {
+            if (this.showIndicator) {
+                this.showIndicator(true, false);
+            }
+
+            const url = formatRoutes(
+                ApiConfig.instance.routes.deleteAppointmentByDateAndStaffName.toString(),
+                {
+                    staffName: staffName,
+                    startDate: startDate.toISOString(),
+                    endDate: endDate.toISOString()
+                }
+            );
+
+            await ApiServiceInstance().delete(url);
+
+            if (this.showIndicator) {
+                this.showIndicator(false, true);
+            }
+        } catch (error) {
+            if (this.showIndicator) {
+                this.showIndicator(false, false);
+            }
+            defaultApiErrorHandler.handleError(error);
+
+            for (const errorHandler of errorHandlers) {
+                errorHandler.handleError(error);
+            }
+            return false;
+        }
+    }
+
     static async replaceAppointmentsData(
         staffName: string,
         weekViewId: string,
@@ -385,15 +260,15 @@ export class AppointmentApiService extends ApiResultIndicator {
             if (this.showIndicator) {
                 this.showIndicator(true, false);
             }
-            const url = formatUrl(
-                API_ENDPOINTS.deleteAppointmentsByWeekViewIdAndStaffName,
+            const url = formatRoutes(
+                ApiConfig.instance.routes.deleteAppointmentsByWeekViewIdAndStaffName.toString(),
                 {
                     weekViewId: weekViewId,
                     staffName: staffName
                 }
             );
 
-            await apiService.delete(url);
+            await ApiServiceInstance().delete(url);
 
             await AppointmentApiService.createAppointmentsData(
                 staffName,
@@ -443,8 +318,8 @@ export class AppointmentApiService extends ApiResultIndicator {
         }
 
         try {
-            await apiService.post(
-                API_ENDPOINTS.createAppointments,
+            await ApiServiceInstance().post(
+                ApiConfig.instance.routes.createAppointments.toString(),
                 appointmentsData
             );
 
@@ -471,8 +346,8 @@ export class AppointmentApiService extends ApiResultIndicator {
         });
 
         try {
-            const response = await apiService.post(
-                API_ENDPOINTS.createShareAppointmentsLink,
+            const response = await ApiServiceInstance().post(
+                ApiConfig.instance.routes.createShareAppointmentsLink.toString(),
                 createShareLinkForm
             );
             return response;
@@ -492,8 +367,8 @@ export class AppointmentApiService extends ApiResultIndicator {
         ...errorHandlers: IApiErrorHandler[]
     ) {
         try {
-            const response = await apiService.post(
-                API_ENDPOINTS.fetchAppointmentsExcelFile,
+            const response = await ApiServiceInstance().post(
+                ApiConfig.instance.routes.fetchAppointmentsExcelFile.toString(),
                 {
                     fromDate: fromDate.toISOString(),
                     toDate: toDate.toISOString(),
@@ -522,10 +397,10 @@ export class AuthApiService {
             email: email,
             password: password
         });
-
+        console.log(ApiConfig.instance.routes.signIn.toString());
         try {
-            const response = await apiService.post(
-                API_ENDPOINTS.signIn,
+            const response = await ApiServiceInstance().post(
+                ApiConfig.instance.routes.signIn.toString(),
                 signInForm
             );
             return response.data;
@@ -545,8 +420,8 @@ export class AuthApiService {
         const signUpForm = new RegistrationForm(params);
 
         try {
-            const response = await apiService.post(
-                API_ENDPOINTS.register,
+            const response = await ApiServiceInstance().post(
+                ApiConfig.instance.routes.register.toString(),
                 signUpForm
             );
             return response.data;
@@ -603,5 +478,3 @@ export class MessageCodeService {
         return undefined;
     }
 }
-
-export default apiService;

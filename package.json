@@ -6,6 +6,10 @@
         "@devexpress/dx-react-core": "^4.0.8",
         "@devexpress/dx-react-scheduler": "^4.0.8",
         "@devexpress/dx-react-scheduler-material-ui": "^4.0.8",
+        "@lst97/react-common-interceptors": "^0.1.0-alpha.1",
+        "@lst97/common-services": "0.1.0-alpha.7",
+        "@lst97/common-response-structure": "0.2.0-alpha.8",
+        "@lst97/common-restful": "0.1.0-alpha.16",
         "@emotion/react": "^11.11.3",
         "@emotion/styled": "^11.11.0",
         "@mui/icons-material": "^5.15.10",
@@ -34,7 +38,8 @@
         "react-router-dom": "^6.22.1",
         "react-scripts": "5.0.1",
         "typescript": "^5.3.3",
-        "web-vitals": "^3.5.2"
+        "web-vitals": "^3.5.2",
+        "reflect-metadata": "0.2.2"
     },
     "overrides": {
         "react-scripts": {
@@ -45,7 +50,8 @@
         }
     },
     "scripts": {
-        "start": "react-scripts start",
+        "start": "GENERATE_SOURCEMAP=false react-scripts start",
+        "dev": "react-scripts start",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",

@@ -13,9 +13,7 @@ import {
 import StaffData from '../../../models/share/scheduler/StaffData';
 import {
     StaffApiService,
-    AppointmentApiService,
-    ApiAuthenticationErrorHandler,
-    CommonApiErrorHandler
+    AppointmentApiService
 } from '../../../services/ApiService';
 import { ColorUtils } from '../../../utils/ColorUtils';
 import {
@@ -29,6 +27,11 @@ import { useNavigate } from 'react-router-dom';
 import { SnackbarContext } from '../../../context/SnackbarContext';
 import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContext';
 import { AddStaffDialog, EditStaffDialog } from './StaffDialog';
+import StaffAppointment from '../../../models/scheduler/StaffAppointment';
+import {
+    ApiAuthenticationErrorHandler,
+    SnackbarApiErrorHandler
+} from '@lst97/common-restful';
 
 const StaffScheduler = () => {
     const [staffDataList, setStaffDataList] = useState<StaffData[]>([]);
@@ -36,6 +39,8 @@ const StaffScheduler = () => {
     const [addStaffDialogOpen, setAddStaffDialogOpen] = useState(false);
     const [editStaffDialogOpen, setEditStaffDialogOpen] = useState(false);
     const [isDialogConfirmLoading, setIsDialogConfirmLoading] = useState(false);
+    const [tooltipVisibility, setTooltipVisibility] = useState(false);
+
     const [selectedEditStaff, setSelectedEditStaff] =
         useState<StaffData | null>(null);
     const [selectedPlannerCells, setSelectedPlannerCells] = useState<Date[]>(
@@ -54,11 +59,11 @@ const StaffScheduler = () => {
 
     const navigate = useNavigate();
 
-    const [commonApiErrorHandler] = useState(new CommonApiErrorHandler());
+    const [snackbarApiErrorHandler] = useState(new SnackbarApiErrorHandler());
     const [apiAuthErrorHandler] = useState(new ApiAuthenticationErrorHandler());
-    apiAuthErrorHandler.useNavigate(navigate);
+    apiAuthErrorHandler.useNavigate(navigate, '/login');
     apiAuthErrorHandler.useSnackbar(showSnackbar);
-    commonApiErrorHandler.useSnackbar(showSnackbar);
+    snackbarApiErrorHandler.useSnackbar(showSnackbar);
     StaffApiService.useIndicator(showIndicator);
     AppointmentApiService.useIndicator(showIndicator);
 
@@ -78,6 +83,46 @@ const StaffScheduler = () => {
         } else {
             setSelectedStaff(name);
         }
+    };
+
+    const handleTooltipVisibilityChange = (value: boolean) => {
+        setTooltipVisibility(value);
+    };
+
+    const handleViewerAppointmentDelete = (appointment: StaffAppointment) => {
+        // Remove related dates from the viewer
+        let staffCurrentAppointmentsDate =
+            selectedScheduleMap[appointment.title].schedule;
+
+        // Filter out dates within the appointment range
+        const filteredDates = staffCurrentAppointmentsDate.filter((date) => {
+            return (
+                date.getTime() < appointment.startDate.getTime() ||
+                date.getTime() > appointment.endDate.getTime()
+            );
+        });
+
+        // Update the schedule
+        setSelectedScheduleMap({
+            ...selectedScheduleMap,
+            [appointment.title]: {
+                ...selectedScheduleMap[appointment.title],
+                schedule: filteredDates
+            }
+        });
+
+        // update the planner if selectedStaff is the same as appointment's title (staff name)
+        if (selectedStaff === appointment.title) {
+            setSelectedPlannerCells(filteredDates);
+        }
+
+        // TODO: Build 2 - Add API call to delete appointment from backend
+        AppointmentApiService.deleteAppointmentByDateAndStaffName(
+            appointment.title,
+            appointment.startDate,
+            appointment.endDate,
+            apiAuthErrorHandler
+        );
     };
 
     const handleAddStaffOpenDialog = () => {
@@ -166,7 +211,7 @@ const StaffScheduler = () => {
         StaffApiService.updateStaff(
             staffData,
             apiAuthErrorHandler,
-            commonApiErrorHandler
+            snackbarApiErrorHandler
         )
             .then(() => {
                 const updatedSelectedScheduleMap = { ...selectedScheduleMap };
@@ -433,7 +478,9 @@ const StaffScheduler = () => {
                     onCurrentDateChange={onCurrentDateChange}
                     onCurrentViewNameChange={onCurrentViewNameChange}
                     focusStaffName={hoveredStaff}
-                    onDelete={() => {}}
+                    onDelete={handleViewerAppointmentDelete}
+                    tooltipVisibility={tooltipVisibility}
+                    onTooltipVisibilityChange={handleTooltipVisibilityChange}
                 />
             </Grid>
         </Grid>

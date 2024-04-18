@@ -1,5 +1,5 @@
+import { ReactTokenServiceInstance } from '@lst97/common-services';
 import React, { ReactElement, createContext, useState } from 'react';
-import { AccessTokenService } from '../services/TokenService';
 
 type Props = {
     children?: React.ReactNode;
@@ -11,7 +11,7 @@ type IAuthContext = {
 };
 
 const initialAuthContext: IAuthContext = {
-    auth: !AccessTokenService.getToken(),
+    auth: !ReactTokenServiceInstance().getToken('accessToken'),
     setAuth: () => {}
 };
 
