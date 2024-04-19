@@ -2,9 +2,9 @@ import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import React, { useContext } from 'react';
 import {
-    SnackbarContext,
-    SnackbarContextData
-} from '../../context/SnackbarContext';
+    SnackbarContextData,
+    SnackbarContext
+} from '@lst97/react-common-accessories';
 
 const Alert = React.forwardRef<HTMLDivElement, any>(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;

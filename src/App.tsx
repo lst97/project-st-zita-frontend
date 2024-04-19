@@ -1,9 +1,11 @@
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Routes from './pages/Routes';
-import { SnackbarProvider } from './context/SnackbarContext';
+import {
+    SnackbarProvider,
+    LoadingIndicatorProvider
+} from '@lst97/react-common-accessories';
 import AppSnackbar from './components/common/Snackbar';
-import { LoadingIndicatorProvider } from './context/LoadingIndicatorContext';
 import ApiResultIndicator from './components/common/indicators/ApiResultIndicator';
 import {
     useJwtInterceptor,

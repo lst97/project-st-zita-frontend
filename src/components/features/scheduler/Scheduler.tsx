@@ -24,8 +24,10 @@ import {
 } from '../../../utils/SchedulerHelpers';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SnackbarContext } from '../../../context/SnackbarContext';
-import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContext';
+import {
+    SnackbarContext,
+    LoadingIndicatorContext
+} from '@lst97/react-common-accessories';
 import { AddStaffDialog, EditStaffDialog } from './StaffDialog';
 import StaffAppointment from '../../../models/scheduler/StaffAppointment';
 import {

@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { LoadingIndicatorContext } from '../../../context/LoadingIndicatorContext';
+import { LoadingIndicatorContext } from '@lst97/react-common-accessories';
 import { useContext } from 'react';
 import Alert from '@mui/material/Alert';
 

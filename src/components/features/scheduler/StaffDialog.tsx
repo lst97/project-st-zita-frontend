@@ -16,7 +16,7 @@ import { Box, CircularProgress } from '@mui/material';
 import {
     SnackbarContext,
     SnackbarContextData
-} from '../../../context/SnackbarContext';
+} from '@lst97/react-common-accessories';
 
 const StaffDialog = ({
     open,

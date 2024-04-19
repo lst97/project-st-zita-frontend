@@ -15,7 +15,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { AuthApiService } from '../../services/ApiService';
 import { ReactTokenServiceInstance } from '@lst97/common-services';
 import CircularProgress from '@mui/material/CircularProgress';
-import { SnackbarContext } from '../../context/SnackbarContext';
+import { SnackbarContext } from '@lst97/react-common-accessories';
 import React from 'react';
 import { Fade } from '@mui/material';
 import SignUp from './SignUpPage';

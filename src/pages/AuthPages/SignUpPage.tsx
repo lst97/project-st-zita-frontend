@@ -11,7 +11,7 @@ import { passwordSchema } from '../../schemas/PasswordSchema';
 import { emailSchema } from '../../schemas/EmailSchema';
 import { AuthApiService } from '../../services/ApiService';
 import { useContext, useState } from 'react';
-import { SnackbarContext } from '../../context/SnackbarContext';
+import { SnackbarContext } from '@lst97/react-common-accessories';
 import { ColorUtils } from '../../utils/ColorUtils';
 import { CircularProgress } from '@mui/material';
 import {

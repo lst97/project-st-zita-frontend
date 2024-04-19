@@ -22,7 +22,7 @@ import {
 import { Public, SettingsOutlined } from '@mui/icons-material';
 import { Permission, PermissionHelper } from '../../../utils/PermissionHelper';
 import useTheme from '@mui/material/styles/useTheme';
-import { SnackbarContext } from '../../../context/SnackbarContext';
+import { SnackbarContext } from '@lst97/react-common-accessories';
 import { AppointmentApiService } from '../../../services/ApiService';
 
 const commonFlexColumnStyles = {

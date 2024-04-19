@@ -5,7 +5,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
-import { addDays, endOfWeek, set, startOfWeek } from 'date-fns';
+import { addDays, endOfWeek, startOfWeek } from 'date-fns';
 
 import FormGroup from '@mui/material/FormGroup';
 import {
@@ -21,14 +21,10 @@ import {
     Typography
 } from '@mui/material';
 import { SettingsOutlined } from '@mui/icons-material';
-import { SnackbarContext } from '../../../context/SnackbarContext';
+import { SnackbarContext } from '@lst97/react-common-accessories';
 import { DateRangePicker, Preview, RangeKeyDict } from 'react-date-range';
 import { useTheme } from '@mui/material';
-import { ExportAsExcelForm } from '../../../models/forms/scheduler/ExportAsExcelForm';
 import { AppointmentApiService } from '../../../services/ApiService';
-import { da } from 'date-fns/locale';
-import { color } from 'html2canvas/dist/types/css/types/color';
-import { AxiosHeaders } from 'axios';
 
 const commonFlexColumnStyles = {
     display: 'flex',
