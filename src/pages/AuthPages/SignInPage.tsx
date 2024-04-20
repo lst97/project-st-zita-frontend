@@ -49,10 +49,13 @@ export default function SignInSide() {
         setAuth(true);
 
         // Check if the token is valid before navigating if necessary
-        ReactTokenServiceInstance().addTokenKey(
-            'accessToken',
-            (_token) => true
-        );
+        if (ReactTokenServiceInstance().getToken('accessToken') === null) {
+            ReactTokenServiceInstance().addTokenKey(
+                'accessToken',
+                (_token) => true
+            );
+        }
+        ReactTokenServiceInstance().setToken('accessToken', jwtToken);
         navigate('/');
     };
 

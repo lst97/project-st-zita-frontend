@@ -6,7 +6,7 @@ import axios from 'axios';
  */
 export class ApiConfig {
     private static _instance: ApiConfig;
-    private _routes: { [key: string]: URL } = {};
+    private _routes: { [key: string]: string } = {};
 
     private constructor() {}
 
@@ -17,7 +17,7 @@ export class ApiConfig {
         return this._instance;
     }
 
-    public get routes(): { [key: string]: URL } {
+    public get routes(): { [key: string]: string } {
         return this._routes;
     }
     public init({
@@ -41,36 +41,20 @@ export class ApiConfig {
             apiVersion: apiVersion || 'v1',
             axiosInstance: axios
         });
-        const baseUrl = ApiServiceConfig.instance().baseUrl + '/';
+        const baseUrl = ApiServiceConfig.instance().baseUrl;
         this._routes = {
-            fetchStaffsData: new URL('staffs', baseUrl),
-            createStaff: new URL('staffs', baseUrl),
-            updateStaff: new URL('staffs/edit', baseUrl),
-            fetchAppointmentsData: new URL(
-                'appointments/week_view/{weekViewId}',
-                baseUrl
-            ),
-            fetchAppointmentsDataByLinkId: new URL(
-                'shared_appointments/{linkId}?weekViewId={weekViewId}',
-                baseUrl
-            ),
-            fetchAppointmentsExcelFile: new URL(
-                'appointments/export/excel',
-                baseUrl
-            ),
-            createAppointments: new URL('appointments', baseUrl),
-            createShareAppointmentsLink: new URL('appointments/share', baseUrl),
-            deleteAppointmentsByWeekViewIdAndStaffName: new URL(
-                'appointments/week_view/{weekViewId}?staffName={staffName}',
-                baseUrl
-            ),
-            deleteAppointmentByDateAndStaffName: new URL(
-                'appointments?startDate={startDate}&endDate={endDate}&staffName={staffName}',
-                baseUrl
-            ),
-            deleteStaff: new URL('staffs?staffName={staffName}', baseUrl),
-            signIn: new URL('auth/signin', baseUrl),
-            register: new URL('auth/register', baseUrl)
+            fetchStaffsData: `${baseUrl}/staffs`,
+            createStaff: `${baseUrl}/staffs`,
+            updateStaff: `${baseUrl}/staffs/edit`,
+            fetchAppointmentsData: `${baseUrl}/appointments/week_view/{weekViewId}`,
+            fetchAppointmentsDataByLinkId: `${baseUrl}/shared_appointments/{linkId}?weekViewId={weekViewId}`,
+            fetchAppointmentsExcelFile: `${baseUrl}/appointments/export/excel`,
+            createAppointments: `${baseUrl}/appointments`,
+            createShareAppointmentsLink: `${baseUrl}/appointments/share`,
+            deleteAppointmentsByWeekViewIdAndStaffName: `${baseUrl}/appointments/week_view/{weekViewId}?staffName={staffName}`,
+            deleteStaff: `${baseUrl}/staffs?staffName={staffName}`,
+            signIn: `${baseUrl}/auth/signin`,
+            register: `${baseUrl}/auth/register`
         };
     }
 }

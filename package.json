@@ -9,7 +9,7 @@
         "@lst97/react-common-interceptors": "^0.1.0-alpha.1",
         "@lst97/common-services": "0.1.0-alpha.7",
         "@lst97/common-response-structure": "0.2.0-alpha.8",
-        "@lst97/common-restful": "0.1.0-alpha.16",
+        "@lst97/common-restful": "0.1.0-alpha.18",
         "@lst97/react-common-accessories": "0.1.0-alpha.3",
         "@emotion/react": "^11.11.3",
         "@emotion/styled": "^11.11.0",
